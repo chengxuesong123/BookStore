@@ -28,9 +28,11 @@
     <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap">
         {if $order.status === 'pending'}
         <form method="post" action="/order/{$order.id}/pay">
+    {:csrf_field()}
             <button class="btn btn-primary" type="submit">模拟付款</button>
         </form>
         <form method="post" action="/order/{$order.id}/cancel">
+    {:csrf_field()}
             <button class="btn btn-ghost" type="submit" data-confirm="确定取消这笔订单？库存会回补。">取消订单</button>
         </form>
         {/if}
@@ -39,6 +41,7 @@
         {/if}
         {if $order.status === 'shipped'}
         <form method="post" action="/order/{$order.id}/receive">
+    {:csrf_field()}
             <button class="btn btn-navy" type="submit">确认收货</button>
         </form>
         {/if}

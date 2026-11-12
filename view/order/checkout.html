@@ -16,6 +16,7 @@
         </div>
 
         <form id="checkout-form" method="post" action="/checkout" novalidate data-once>
+    {:csrf_field()}
             <div class="field {if !empty($errors.receiver)}has-error{/if}">
                 <label>收货人<span class="req">*</span></label>
                 <input name="receiver" placeholder="请输入收货人姓名"

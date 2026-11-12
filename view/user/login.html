@@ -10,6 +10,7 @@
         {/if}
 
         <form id="login-form" method="post" action="/login" novalidate>
+    {:csrf_field()}
             <input type="hidden" name="next" value="{$next}">
             {if $adminMode}<input type="hidden" name="admin" value="1">{/if}
 

@@ -20,6 +20,7 @@
 
     <div class="info-card">
         <form id="book-form" method="post" action="{$action}" novalidate>
+    {:csrf_field()}
             <div class="form-grid">
                 <div class="field {if !empty($errors.title)}has-error{/if}">
                     <label>书名<span class="req">*</span></label>

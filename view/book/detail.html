@@ -29,6 +29,7 @@
         </div>
 
         <form class="buy-row" method="post" action="/cart/add" data-once>
+    {:csrf_field()}
             <input type="hidden" name="book_id" value="{$book.id}">
             <input type="hidden" name="from" value="/book/{$book.id}">
             <div class="qty">

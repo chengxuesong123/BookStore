@@ -49,16 +49,19 @@
         <div style="display:flex;gap:10px;flex-wrap:wrap">
             {if $order.status === 'paid'}
             <form method="post" action="/admin/orders/{$order.id}/ship">
+    {:csrf_field()}
                 <button class="btn btn-primary" type="submit">标记发货</button>
             </form>
             {/if}
             {if $order.status === 'shipped'}
             <form method="post" action="/admin/orders/{$order.id}/complete">
+    {:csrf_field()}
                 <button class="btn btn-navy" type="submit">设为已完成</button>
             </form>
             {/if}
             {if $order.status === 'pending' || $order.status === 'paid'}
             <form method="post" action="/admin/orders/{$order.id}/cancel">
+    {:csrf_field()}
                 <button class="btn btn-ghost" type="submit" data-confirm="取消这笔订单？库存会回补。">取消订单</button>
             </form>
             {/if}

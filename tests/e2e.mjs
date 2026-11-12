@@ -425,6 +425,43 @@ try {
     check('自己的订单可看', (await evalJs('location.pathname')) === cancelPath);
     const foreign = await evalJs('fetch("/order/9999").then(r => r.status)');
     check('不存在的订单返回 404', foreign === 404);
+
+    console.log('\n[18] 分类管理与 CSRF');
+    await click('a[href="/logout"]');
+    await sleep(900);
+    await go('/login');
+    await setVal('#login-form input[name=email]', 'admin@moyu.com');
+    await setVal('#login-form input[name=password]', 'admin123');
+    await submit('#login-form');
+    await sleep(1300);
+    await go('/admin/categories');
+    const catNames = () => evalJs('Array.from(document.querySelectorAll(".table-wrap tbody tr input[name=name]")).map(function(i){return i.value})');
+    check('分类表 6 行', (await count('.table-wrap tbody tr')) === 6);
+    await setVal('form[action="/admin/categories/save"] input[name=name]', '科幻');
+    await setVal('form[action="/admin/categories/save"] input[name=sort]', '9');
+    await submit('form[action="/admin/categories/save"]');
+    await sleep(1300);
+    check('新增分类成功', (await catNames()).includes('科幻'));
+    check('分类表变 7 行', (await count('.table-wrap tbody tr')) === 7);
+
+    await evalJs('(function(){var rows=document.querySelectorAll(".table-wrap tbody tr");for(var i=0;i<rows.length;i++){var inp=rows[i].querySelector("input[name=name]");if(inp&&inp.value==="科幻"){inp.value="科幻小说";rows[i].querySelector("form").requestSubmit();return true;}}return false;})()');
+    await sleep(1400);
+    const renamed = await catNames();
+    check('重命名分类成功', renamed.includes('科幻小说') && !renamed.includes('科幻'));
+
+    await evalJs('(function(){var rows=document.querySelectorAll(".table-wrap tbody tr");for(var i=0;i<rows.length;i++){var inp=rows[i].querySelector("input[name=name]");if(inp&&inp.value==="科幻小说"){rows[i].querySelector("form[action$=\'/delete\']").requestSubmit();return true;}}return false;})()');
+    await sleep(1400);
+    check('删除空分类成功', !(await catNames()).includes('科幻小说'));
+
+    await go('/admin/categories');
+    const beforeRows = await count('.table-wrap tbody tr');
+    await evalJs('(function(){var rows=document.querySelectorAll(".table-wrap tbody tr");for(var i=0;i<rows.length;i++){var inp=rows[i].querySelector("input[name=name]");if(inp&&inp.value==="文学"){rows[i].querySelector("form[action$=\'/delete\']").requestSubmit();return true;}}return false;})()');
+    await sleep(1400);
+    check('有书的分类拒绝删除', (await count('.table-wrap tbody tr')) === beforeRows);
+    check('拒绝删除有提示', (await text('#toast')).includes('先处理图书'));
+
+    const noToken = await evalJs('fetch("/cart/add", {method: "POST", headers: {"Content-Type": "application/x-www-form-urlencoded"}, body: "book_id=3&qty=1"}).then(r => r.status)');
+    check('无 CSRF token 的 POST 被拒（419）', noToken === 419);
 } finally {
     cdp.close();
 }

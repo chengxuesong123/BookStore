@@ -65,11 +65,13 @@
                     <div class="actions">
                         <a class="btn btn-sm btn-ghost" href="/admin/books/{$b.id}/edit">编辑</a>
                         <form method="post" action="/admin/books/{$b.id}/toggle" style="display:inline">
+    {:csrf_field()}
                             <button class="btn btn-sm btn-ghost" type="submit">
                                 {if $b.status === 'on'}下架{else /}上架{/if}
                             </button>
                         </form>
                         <form method="post" action="/admin/books/{$b.id}/delete" style="display:inline">
+    {:csrf_field()}
                             <button class="btn btn-sm btn-ghost" type="submit"
                                     data-confirm="确定删除《{$b.title}》？购物车里的这本书会一并移除。">删除</button>
                         </form>

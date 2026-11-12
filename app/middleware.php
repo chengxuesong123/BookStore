@@ -7,4 +7,6 @@ return [
     // \think\middleware\LoadLangPack::class,
     // Session初始化
     \think\middleware\SessionInit::class,
+    // 表单 CSRF 校验（POST）
+    \app\middleware\VerifyCsrf::class,
 ];

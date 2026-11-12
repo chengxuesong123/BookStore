@@ -26,6 +26,7 @@
             </div>
             <div class="cart-qty-cell">
                 <form class="qty" method="post" action="/cart/update" style="height:38px">
+    {:csrf_field()}
                     <input type="hidden" name="book_id" value="{$line.book.id}">
                     <button type="submit" name="qty" value="{$line.qty - 1}" {if $line.qty <= 1}disabled{/if}>−</button>
                     <input type="text" value="{$line.qty}" readonly>
@@ -35,6 +36,7 @@
             <div class="cart-sum">{:yuan($line.line_total)}</div>
             <div class="cart-del-cell">
                 <form method="post" action="/cart/remove">
+    {:csrf_field()}
                     <input type="hidden" name="book_id" value="{$line.book.id}">
                     <button class="cart-del" type="submit">删除</button>
                 </form>

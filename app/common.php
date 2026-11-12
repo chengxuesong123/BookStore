@@ -74,3 +74,25 @@ function cart_count(): int
 
     return 0;
 }
+
+/**
+ * 当前会话的 CSRF token（没有就生成）
+ */
+function csrf_token(): string
+{
+    $token = (string) Session::get('_csrf', '');
+    if ($token === '') {
+        $token = bin2hex(random_bytes(16));
+        Session::set('_csrf', $token);
+    }
+
+    return $token;
+}
+
+/**
+ * 表单里的隐藏 token 输入
+ */
+function csrf_field(): string
+{
+    return '<input type="hidden" name="_token" value="' . htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8') . '">';
+}
