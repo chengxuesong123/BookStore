@@ -1,0 +1,15 @@
+# 浏览器测试用的临时 profile 与日志
+demo/.e2e-profile/
+demo/.edge-profile/
+demo/.probe-profile/
+demo/**/.e2e-profile/
+*.log
+
+# 界面截图（由本地截图步骤生成）
+demo/shots/
+
+# 系统 / 编辑器
+Thumbs.db
+.DS_Store
+.idea/
+.vscode/

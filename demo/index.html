@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>墨香书屋 · 图书商城 Demo</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="logo" href="#/"><span class="seal">墨</span>墨香书屋</a>
+    <nav class="main-nav">
+      <a href="#/" data-nav="/">首页</a>
+      <a href="#/books" data-nav="/books">全部图书</a>
+      <a href="#/orders" data-nav="/orders">我的订单</a>
+      <a href="#/admin">后台预览</a>
+      <a href="#/cart" data-nav="/cart" class="cart-link">购物车<span class="cart-badge" id="cart-badge" style="display:none">0</span></a>
+    </nav>
+  </div>
+</header>
+
+<main id="app"></main>
+
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <span>墨香书屋 · 前端原型 Demo（mock 数据，无真实后端）</span>
+    <span>技术栈：HTML + CSS + 原生 JS　·　正式实现：ThinkPHP 8</span>
+    <button class="reset-demo" data-action="reset-demo">重置演示数据</button>
+  </div>
+</footer>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script src="assets/mock-data.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
