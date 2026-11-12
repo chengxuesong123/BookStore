@@ -1,4 +1,4 @@
-/* ============================================================
+﻿/* ============================================================
    墨屿书屋 · 样式
    配色参考：浅蓝 → 粉紫渐变 / 薄荷绿卡片 / 珊瑚红按钮 / 深藏青文字
    ============================================================ */
@@ -587,3 +587,14 @@ td .actions { display: flex; gap: 6px; }
   .footer-grid { grid-template-columns: 1fr; }
   .page-head h1 { font-size: 26px; }
 }
+
+/* ===== 服务端版本补充（M2+）===== */
+.admin-tabs a {
+  padding: 9px 20px; border-radius: 999px; border: 1px solid var(--line);
+  background: #fff; color: #4a5f7d; font-size: 13.5px; transition: all .2s; text-decoration: none;
+}
+.admin-tabs a:hover { border-color: var(--navy); color: var(--navy); }
+.admin-tabs a.active { background: var(--navy); border-color: var(--navy); color: #fff; }
+.flash-error { color: #b42318; }
+.form-actions { display: flex; gap: 10px; align-items: center; margin-top: 6px; }
+.field input, .field textarea { width: 100%; }

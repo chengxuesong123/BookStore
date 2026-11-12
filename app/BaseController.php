@@ -53,11 +53,19 @@ abstract class BaseController
     // 初始化
     protected function initialize()
     {
+        // 表单回填与字段错误：取出即清空，只影响下一次渲染
+        $old    = (array) \think\facade\Session::get('old', []);
+        $errors = (array) \think\facade\Session::get('errors', []);
+        \think\facade\Session::delete('old');
+        \think\facade\Session::delete('errors');
+
         // 所有页面共用的变量：登录态、购物车角标、一次性提示
         \think\facade\View::assign([
             'user'      => current_user(),
             'cartCount' => cart_count(),
             'flash'     => flash_get(),
+            'old'       => $old,
+            'errors'    => $errors,
             'nav'       => '',
             'title'     => '墨屿书屋 MOYU BOOKS',
         ]);

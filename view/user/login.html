@@ -1,0 +1,51 @@
+{extend name="public/layout" /}
+
+{block name="title"}登录 · 墨屿书屋{/block}
+
+{block name="content"}
+<div class="auth-wrap">
+    <div class="auth-card">
+        <h1>欢迎回来</h1>
+        <p class="sub">登录后可以下单、查看订单</p>
+
+        {if $adminMode}
+        <div class="admin-note show">后台入口仅对管理员开放，请使用管理员账号登录。</div>
+        {/if}
+
+        <form id="login-form" method="post" action="/login" novalidate>
+            <input type="hidden" name="next" value="{$next}">
+            {if $adminMode}<input type="hidden" name="admin" value="1">{/if}
+
+            <div class="field {if !empty($errors.email)}has-error{/if}" data-field="email">
+                <label>邮箱<span class="req">*</span></label>
+                <input name="email" type="email" placeholder="you@example.com" autocomplete="username"
+                       value="{$old.email|default=''}">
+                <div class="err">{$errors.email|default='请输入正确的邮箱地址'}</div>
+            </div>
+
+            <div class="field {if !empty($errors.password)}has-error{/if}" data-field="password">
+                <label>密码<span class="req">*</span></label>
+                <input name="password" type="password" placeholder="至少 6 位" autocomplete="current-password">
+                <div class="err">{$errors.password|default='密码至少 6 位'}</div>
+            </div>
+
+            <div class="auth-actions">
+                <span>还没有账号？</span>
+                <a href="/register{if $next !== ''}?next={$next|urlencode}{/if}">去注册</a>
+            </div>
+
+            <button class="btn btn-primary btn-block" type="submit">登录</button>
+        </form>
+
+        <p class="auth-switch">
+            还没有账号？<a href="/register{if $next !== ''}?next={$next|urlencode}{/if}">立即注册</a>
+        </p>
+
+        <div class="auth-hint">
+            <b>演示账号</b><br>
+            顾客：注册一个邮箱账号即可登录<br>
+            管理员：<b>admin@moyu.com</b> / <b>admin123</b>（登录后自动进入后台）
+        </div>
+    </div>
+</div>
+{/block}

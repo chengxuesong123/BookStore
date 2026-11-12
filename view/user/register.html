@@ -1,0 +1,51 @@
+{extend name="public/layout" /}
+
+{block name="title"}注册 · 墨屿书屋{/block}
+
+{block name="content"}
+<div class="auth-wrap">
+    <div class="auth-card">
+        <h1>创建账号</h1>
+        <p class="sub">用邮箱注册，注册后自动登录</p>
+
+        <form id="register-form" method="post" action="/register" novalidate>
+            <input type="hidden" name="next" value="{$next}">
+
+            <div class="field {if !empty($errors.email)}has-error{/if}" data-field="email">
+                <label>邮箱<span class="req">*</span></label>
+                <input name="email" type="email" placeholder="you@example.com" autocomplete="username"
+                       value="{$old.email|default=''}">
+                <div class="err">{$errors.email|default='请输入正确的邮箱地址'}</div>
+            </div>
+
+            <div class="field {if !empty($errors.nickname)}has-error{/if}" data-field="nickname">
+                <label>昵称<span class="req">*</span></label>
+                <input name="nickname" placeholder="怎么称呼你" value="{$old.nickname|default=''}">
+                <div class="err">{$errors.nickname|default='昵称至少 2 个字'}</div>
+            </div>
+
+            <div class="field {if !empty($errors.password)}has-error{/if}" data-field="password">
+                <label>密码<span class="req">*</span></label>
+                <input name="password" type="password" placeholder="至少 6 位" autocomplete="new-password">
+                <div class="err">{$errors.password|default='密码至少 6 位'}</div>
+            </div>
+
+            <div class="field {if !empty($errors.confirm)}has-error{/if}" data-field="confirm">
+                <label>确认密码<span class="req">*</span></label>
+                <input name="confirm" type="password" placeholder="再输入一次" autocomplete="new-password">
+                <div class="err">{$errors.confirm|default='两次输入的密码不一致'}</div>
+            </div>
+
+            <button class="btn btn-primary btn-block" type="submit">注册并登录</button>
+        </form>
+
+        <p class="auth-switch">
+            已经有账号了？<a href="/login{if $next !== ''}?next={$next|urlencode}{/if}">去登录</a>
+        </p>
+
+        <div class="auth-hint">
+            注册只会创建<b>顾客</b>账号。管理员账号由系统预置，不能注册。
+        </div>
+    </div>
+</div>
+{/block}

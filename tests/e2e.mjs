@@ -87,6 +87,7 @@ await cdp.send('Page.enable');
 await cdp.send('Network.enable');
 await cdp.send('Network.setCacheDisabled', { cacheDisabled: true });
 await cdp.send('Network.clearBrowserCache');
+await cdp.send('Network.clearBrowserCookies');
 await cdp.send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1000, deviceScaleFactor: 1, mobile: false });
 
 const evalJs = async (expression) => {
@@ -97,6 +98,9 @@ const evalJs = async (expression) => {
 const go = async (path) => { await cdp.send('Page.navigate', { url: BASE + path }); await sleep(700); };
 const text = async (sel) => evalJs(`(document.querySelector(${JSON.stringify(sel)}) || {}).textContent || ''`);
 const count = async (sel) => evalJs(`document.querySelectorAll(${JSON.stringify(sel)}).length`);
+const click = async (sel) => { await evalJs(`document.querySelector(${JSON.stringify(sel)}).click(); true`); };
+const setVal = async (sel, val) => { await evalJs(`document.querySelector(${JSON.stringify(sel)}).value = ${JSON.stringify(val)}; true`); };
+const submit = async (sel) => { await evalJs(`document.querySelector(${JSON.stringify(sel)}).requestSubmit(); true`); };
 
 try {
     console.log('\n[1] 首页与公共布局');
@@ -117,6 +121,97 @@ try {
     check('样式表已生效', await evalJs('getComputedStyle(document.body).backgroundColor !== "rgba(0, 0, 0, 0)"'));
     check('内容宽度受 .wrap 约束', await evalJs('Math.round(document.querySelector(".wrap").getBoundingClientRect().width) <= 1200'));
     check('桌面无横向溢出', await evalJs('document.documentElement.scrollWidth - document.documentElement.clientWidth === 0'));
+    console.log('\n[3] 登录页与注册入口');
+    await go('/login');
+    check('登录页有注册链接', (await count('a[href^="/register"]')) >= 1);
+    check('登录页提示管理员账号', (await text('.auth-hint')).includes('admin@moyu.com'));
+    await click('a[href^="/register"]');
+    await sleep(700);
+    check('点击后到注册页', (await evalJs('location.pathname')) === '/register');
+    check('注册字段是 email 类型', (await evalJs('document.querySelector("#register-form input[name=email]").type')) === 'email');
+
+    console.log('\n[4] 注册校验');
+    await setVal('#register-form input[name=email]', 'not-an-email');
+    await setVal('#register-form input[name=nickname]', '小');
+    await setVal('#register-form input[name=password]', '123');
+    await setVal('#register-form input[name=confirm]', '456');
+    await submit('#register-form');
+    await sleep(1200);
+    check('邮箱格式报错', await evalJs('document.querySelector(\'[data-field="email"]\').classList.contains("has-error")'));
+    check('昵称过短报错', await evalJs('document.querySelector(\'[data-field="nickname"]\').classList.contains("has-error")'));
+    check('两次密码不一致报错', await evalJs('document.querySelector(\'[data-field="confirm"]\').classList.contains("has-error")'));
+    check('邮箱输入被回填', (await evalJs('document.querySelector("#register-form input[name=email]").value')) === 'not-an-email');
+
+    console.log('\n[5] 注册成功');
+    await setVal('#register-form input[name=email]', 'reader@test.com');
+    await setVal('#register-form input[name=nickname]', '小鱼');
+    await setVal('#register-form input[name=password]', 'test123456');
+    await setVal('#register-form input[name=confirm]', 'test123456');
+    await submit('#register-form');
+    await sleep(1200);
+    check('注册后回到首页', (await evalJs('location.pathname')) === '/');
+    check('顶栏显示昵称', (await text('.topbar-links')).includes('小鱼'));
+    check('登录按钮变昵称', (await text('.btn-login')).includes('小鱼'));
+
+    console.log('\n[6] 重复邮箱');
+    await click('a[href="/logout"]');
+    await sleep(900);
+    await go('/register');
+    await setVal('#register-form input[name=email]', 'reader@test.com');
+    await setVal('#register-form input[name=nickname]', '小鱼二号');
+    await setVal('#register-form input[name=password]', 'test123456');
+    await setVal('#register-form input[name=confirm]', 'test123456');
+    await submit('#register-form');
+    await sleep(1200);
+    check('重复邮箱被拦下', await evalJs('document.querySelector(\'[data-field="email"]\').classList.contains("has-error")'));
+    check('重复邮箱提示文案', (await text('#toast')).includes('已注册'));
+
+    console.log('\n[7] 后台访问控制');
+    await go('/admin');
+    await sleep(700);
+    check('未登录访问后台跳登录页', (await evalJs('location.pathname')) === '/login');
+    check('跳转带上后台参数', (await evalJs('location.search')).includes('admin=1'));
+    check('登录页提示仅管理员', await evalJs('document.querySelector(".admin-note").classList.contains("show")'));
+
+    await setVal('#login-form input[name=email]', 'reader@test.com');
+    await setVal('#login-form input[name=password]', 'test123456');
+    await submit('#login-form');
+    await sleep(1200);
+    await go('/admin');
+    await sleep(700);
+    check('顾客访问后台被重定向回首页', (await evalJs('location.pathname')) === '/');
+    check('提示无后台权限', (await text('#toast')).includes('没有后台权限'));
+    check('后台统计未渲染', (await count('.stat-card')) === 0);
+
+    console.log('\n[8] 退出与登录校验');
+    await click('a[href="/logout"]');
+    await sleep(900);
+    check('退出后显示登录', (await text('.btn-login')).includes('登录'));
+    await go('/login');
+    await setVal('#login-form input[name=email]', 'reader@test.com');
+    await setVal('#login-form input[name=password]', 'wrongpass');
+    await submit('#login-form');
+    await sleep(1200);
+    check('错误密码字段报错', await evalJs('document.querySelector(\'[data-field="password"]\').classList.contains("has-error")'));
+    check('错误密码不区分账号存在与否', (await text('#toast')).includes('邮箱或密码不正确'));
+    await setVal('#login-form input[name=password]', 'test123456');
+    await submit('#login-form');
+    await sleep(1200);
+    check('正确密码登录成功', (await text('.btn-login')).includes('小鱼'));
+
+    console.log('\n[9] 管理员登录进后台');
+    await click('a[href="/logout"]');
+    await sleep(900);
+    await go('/login?admin=1');
+    check('带 admin 参数时提示管理员入口', await evalJs('document.querySelector(".admin-note").classList.contains("show")'));
+    await setVal('#login-form input[name=email]', 'admin@moyu.com');
+    await setVal('#login-form input[name=password]', 'admin123');
+    await submit('#login-form');
+    await sleep(1200);
+    check('管理员登录后到 /admin', (await evalJs('location.pathname')) === '/admin');
+    check('后台标题存在', (await text('.admin-head h1')).includes('后台管理'));
+    check('后台统计 4 张卡', (await count('.stat-card')) === 4);
+    check('后台显示管理员身份', (await text('.admin-head .who')).includes('admin@moyu.com'));
 } finally {
     cdp.close();
 }
