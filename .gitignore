@@ -1,8 +1,15 @@
+# 依赖与运行时产物
+/vendor/
+/runtime/
+/.env
+/.composer-home/
+
 # 浏览器测试用的临时 profile 与日志
 demo/.e2e-profile/
 demo/.edge-profile/
 demo/.probe-profile/
 demo/**/.e2e-profile/
+tests/.edge-profile/
 *.log
 
 # 界面截图（由本地截图步骤生成）

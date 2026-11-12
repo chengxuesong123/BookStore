@@ -1,0 +1,23 @@
+<a class="book-card" href="/book/{$b.id}">
+    <div class="book-cover" style="background:{$b.cover}">
+        <span class="cv-cat">{$b.category_name|default='图书'}</span>
+        <span class="cv-title">{$b.title}</span>
+    </div>
+    <div class="book-body">
+        <div class="book-title">{$b.title}</div>
+        <div class="book-author">{$b.author} · {$b.publisher}</div>
+        <div class="book-foot">
+            <div>
+                <span class="price">{:yuan($b.price)}</span>
+                <span class="price-old">{:yuan($b.original_price)}</span>
+            </div>
+            {if $b.stock <= 0}
+                <span class="stock-out">缺货</span>
+            {elseif $b.stock <= 3 /}
+                <span class="stock-low">仅剩 {$b.stock} 本</span>
+            {else /}
+                <span class="stock-low" style="color:#94a3b8">现货</span>
+            {/if}
+        </div>
+    </div>
+</a>

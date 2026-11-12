@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{block name="title"}{$title|default='墨屿书屋 MOYU BOOKS'}{/block}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="page">
+
+<div class="topbar">
+    <div class="wrap topbar-inner">
+        <span class="topbar-note">满 59 元包邮 · 48 小时内发货</span>
+        <div class="topbar-links">
+            {if $user}
+                <span>你好，{$user.nickname}</span>
+                <a href="/logout">退出登录</a>
+            {else /}
+                <a href="/login">登录 / 注册</a>
+            {/if}
+        </div>
+    </div>
+</div>
+
+<header class="site-header" id="site-header">
+    <div class="wrap header-inner">
+        <a class="logo" href="/">
+            <span class="logo-mark">墨</span>
+            <span class="logo-text">墨屿书屋<small>MOYU BOOKS</small></span>
+        </a>
+        <nav class="main-nav">
+            <a href="/" data-nav="/" class="{if $nav=='/'}active{/if}">首页</a>
+            <a href="/books" data-nav="/books" class="{if $nav=='/books'}active{/if}">全部图书</a>
+            <a href="/orders" data-nav="/orders" class="{if $nav=='/orders'}active{/if}">我的订单</a>
+        </nav>
+        <div class="header-actions">
+            <a class="icon-btn" href="/books" title="搜索图书">🔍</a>
+            <a class="icon-btn" href="/cart" title="购物车" style="position:relative">
+                🛒<span class="cart-badge" id="cart-badge">{if $cartCount > 0}{$cartCount}{/if}</span>
+            </a>
+            <a class="btn-login" href="{if $user}/orders{else /}/login{/if}">{if $user}{$user.nickname}{else /}登录{/if}</a>
+        </div>
+    </div>
+</header>
+
+<main id="app" class="page-enter">
+    <div class="wrap">
+        {block name="content"}{/block}
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="wrap">
+        <div class="footer-grid">
+            <div>
+                <div class="footer-logo">墨屿书屋</div>
+                <p class="muted">十八本精选纸书，从文学到技术。慢慢读，别急。</p>
+            </div>
+            <div class="footer-col">
+                <h4>逛一逛</h4>
+                <a href="/books">全部图书</a>
+                <a href="/orders">我的订单</a>
+                <a href="/cart">购物车</a>
+            </div>
+            <div class="footer-col">
+                <h4>服务</h4>
+                <a href="/books">满 59 包邮</a>
+                <a href="/books">七天退换</a>
+                <a href="/books">正品保障</a>
+            </div>
+            <div class="footer-col">
+                <h4>关于</h4>
+                <span>ThinkPHP 8 + MySQL</span>
+                <span>MVP 演示版本</span>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <span>© 2026 墨屿书屋 · 前端原型已落地为服务端渲染版本</span>
+        </div>
+    </div>
+</footer>
+
+<div id="toast" class="toast {if $flash}show{/if}">{$flash.msg|default=''}</div>
+
+<script src="/static/vendor/jquery.min.js"></script>
+<script src="/static/js/app.js"></script>
+{block name="script"}{/block}
+</body>
+</html>
