@@ -1,8 +1,23 @@
 # 依赖与运行时产物
-/vendor/
-/runtime/
-/.env
+/server/vendor/
+/server/runtime/
+/server/.env
 /.composer-home/
+
+# 依赖缓存
+/.pnpm-store/
+
+# 前端依赖与构建产物
+/bookstor/node_modules/
+/bookstor/dist/
+/bookstor/.vite/
+
+# 上传目录（保留 .gitkeep）
+/server/public/uploads/*
+!/server/public/uploads/.gitkeep
+!/server/public/uploads/avatars/
+/server/public/uploads/avatars/*
+!/server/public/uploads/avatars/.gitkeep
 
 # 浏览器测试用的临时 profile 与日志
 demo/.e2e-profile/
