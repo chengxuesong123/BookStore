@@ -61,6 +61,20 @@
             }
         });
 
+
+        // 后台封面预览
+        $(document).on('input', '#cover-input', function () {
+            var value = this.value.trim();
+            var $preview = $('#cover-preview');
+            if (value === '') {
+                $preview.css('background', 'linear-gradient(150deg, #3d4f6b, #263349)');
+            } else if (/^(https?:\/\/|\/)/.test(value)) {
+                $preview.css('background', '#fff').css('background-image', 'url("' + value + '")')
+                    .css('background-size', 'cover').css('background-position', 'center');
+            } else {
+                $preview.css('background', value).css('background-image', 'none');
+            }
+        });
         // 提交后禁用按钮，避免重复下单
         $(document).on('submit', 'form[data-once]', function () {
             var $button = $(this).find('[type=submit]');

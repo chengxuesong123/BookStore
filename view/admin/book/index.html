@@ -1,0 +1,87 @@
+{include file="../public/header" /}
+
+<div class="admin-shell">
+    <div class="admin-head">
+        <div>
+            <h1>图书管理</h1>
+            <div class="who">共 {$total} 本，下架的书前台不展示</div>
+        </div>
+        <div style="display:flex;gap:10px">
+            <a class="btn btn-primary btn-sm" href="/admin/books/create">+ 新增图书</a>
+            <a class="btn btn-ghost btn-sm" href="/admin">返回概览</a>
+        </div>
+    </div>
+
+    <div class="admin-tabs">
+        <a href="/admin">概览</a>
+        <a class="active" href="/admin/books">图书管理</a>
+        <a href="/admin/orders">订单管理</a>
+        <a href="/admin/categories">分类管理</a>
+    </div>
+
+    <div class="toolbar">
+        <form class="search-box" method="get" action="/admin/books">
+            <input type="search" name="q" placeholder="按书名搜索" value="{$kw}">
+            <button class="btn btn-primary" type="submit">搜索</button>
+        </form>
+    </div>
+
+    {if $empty}
+    <div class="empty">
+        <div class="empty-ico">📚</div>
+        <h3>还没有图书</h3>
+        <p>点右上角新增第一本。</p>
+    </div>
+    {else /}
+    <div class="table-wrap">
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>书名</th>
+                <th>分类</th>
+                <th>现价</th>
+                <th>库存</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            {volist name="books" id="b"}
+            <tr>
+                <td>{$b.id}</td>
+                <td>{$b.title}</td>
+                <td>{$b.category_name|default='-'}</td>
+                <td>{:yuan($b.price)}</td>
+                <td>{$b.stock}</td>
+                <td>
+                    {if $b.status === 'on'}
+                    <span class="pill pill-done">在售</span>
+                    {else /}
+                    <span class="pill pill-cancelled">已下架</span>
+                    {/if}
+                </td>
+                <td>
+                    <div class="actions">
+                        <a class="btn btn-sm btn-ghost" href="/admin/books/{$b.id}/edit">编辑</a>
+                        <form method="post" action="/admin/books/{$b.id}/toggle" style="display:inline">
+                            <button class="btn btn-sm btn-ghost" type="submit">
+                                {if $b.status === 'on'}下架{else /}上架{/if}
+                            </button>
+                        </form>
+                        <form method="post" action="/admin/books/{$b.id}/delete" style="display:inline">
+                            <button class="btn btn-sm btn-ghost" type="submit"
+                                    data-confirm="确定删除《{$b.title}》？购物车里的这本书会一并移除。">删除</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {/volist}
+            </tbody>
+        </table>
+    </div>
+    <div class="pager">{$pager|raw}</div>
+    {/if}
+</div>
+
+{include file="../public/footer" /}

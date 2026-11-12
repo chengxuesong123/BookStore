@@ -1,0 +1,40 @@
+    </div>
+</main>
+
+<footer class="site-footer">
+    <div class="wrap">
+        <div class="footer-grid">
+            <div>
+                <div class="footer-logo">墨屿书屋</div>
+                <p class="muted">十八本精选纸书，从文学到技术。慢慢读，别急。</p>
+            </div>
+            <div class="footer-col">
+                <h4>逛一逛</h4>
+                <a href="/books">全部图书</a>
+                <a href="/orders">我的订单</a>
+                <a href="/cart">购物车</a>
+            </div>
+            <div class="footer-col">
+                <h4>服务</h4>
+                <a href="/books">满 59 包邮</a>
+                <a href="/books">七天退换</a>
+                <a href="/books">正品保障</a>
+            </div>
+            <div class="footer-col">
+                <h4>关于</h4>
+                <span>ThinkPHP 8 + MySQL</span>
+                <span>MVP 演示版本</span>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <span>© 2026 墨屿书屋 · 服务端渲染版本（TP8 + MySQL）</span>
+        </div>
+    </div>
+</footer>
+
+<div id="toast" class="toast {if $flash}show{/if}">{$flash.msg|default=''}</div>
+
+<script src="/static/vendor/jquery.min.js"></script>
+<script src="/static/js/app.js"></script>
+</body>
+</html>

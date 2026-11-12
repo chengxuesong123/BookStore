@@ -1,8 +1,5 @@
-﻿{extend name="../public/layout" /}
+{include file="../public/header" /}
 
-{block name="title"}后台管理 · 墨屿书屋{/block}
-
-{block name="content"}
 <div class="admin-shell">
     <div class="admin-head">
         <div>
@@ -36,4 +33,6 @@
         <p class="muted">左侧功能逐步开放：图书管理可上下架与编辑，订单管理可发货、设为完成。后台入口不在前台导航出现，只有管理员账号能进入。</p>
     </div>
 </div>
-{/block}
+
+
+{include file="../public/footer" /}

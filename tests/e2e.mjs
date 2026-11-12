@@ -212,6 +212,86 @@ try {
     check('后台标题存在', (await text('.admin-head h1')).includes('后台管理'));
     check('后台统计 4 张卡', (await count('.stat-card')) === 4);
     check('后台显示管理员身份', (await text('.admin-head .who')).includes('admin@moyu.com'));
+
+    console.log('\n[10] 图书列表：搜索 / 分类 / 排序 / 分页');
+    await go('/books');
+    check('列表首屏 8 本', (await count('.book-card')) === 8);
+    check('总数显示 18 本', (await text('.page-head .sub')).includes('18'));
+    check('分页控件存在', (await count('.pagination li')) >= 3);
+    check('分类 chip 7 个（全部 + 6 类）', (await count('.chip')) === 7);
+
+    await go('/books?q=' + encodeURIComponent('余华'));
+    check('按作者搜索命中 1 本', (await count('.book-card')) === 1);
+    check('搜索结果提示关键词', (await text('.result-line')).includes('余华'));
+
+    await go('/books?cat=3');
+    check('科技分类 3 本', (await count('.book-card')) === 3);
+
+    await go('/books?sort=price-asc');
+    check('价格升序最低 ¥25.00', (await text('.book-card .price')) === '¥25.00');
+
+    await go('/books');
+    await click('.pagination li a');
+    await sleep(800);
+    check('翻到第 2 页', (await evalJs('location.search')).includes('page=2'));
+    check('第 2 页仍是 8 本', (await count('.book-card')) === 8);
+
+    console.log('\n[11] 图书详情');
+    await go('/book/3');
+    check('详情书名正确', (await text('.detail-info h1')) === '百年孤独');
+    check('有加入购物车与立即购买', (await count('form[action="/cart/add"] button[type=submit]')) === 2);
+    check('显示库存', (await text('.detail-price-row')).includes('库存'));
+    check('同类推荐存在', (await count('.section .book-card')) >= 1);
+    const missing = await evalJs('fetch("/book/9999").then(r => r.status)');
+    check('不存在的书返回 404', missing === 404);
+    await go('/book/4');
+    check('缺货书禁用按钮', await evalJs('document.querySelector(\'form[action="/cart/add"] button[type=submit]\').disabled === true'));
+
+    console.log('\n[12] 后台图书 CRUD');
+    await go('/admin/books');
+    check('后台图书表 12 行（一页）', (await count('.table-wrap tbody tr')) === 12);
+    await go('/admin/books/create');
+    await submit('#book-form');
+    await sleep(1100);
+    check('空表单被拦下', await evalJs('document.querySelector(".field.has-error") !== null'));
+    check('仍停留在新增页', (await evalJs('location.pathname')) === '/admin/books/create');
+
+    await setVal('#book-form input[name=title]', '自动化测试书');
+    await setVal('#book-form select[name=category_id]', '3');
+    await setVal('#book-form input[name=author]', '测试作者');
+    await setVal('#book-form input[name=price]', '45.50');
+    await setVal('#book-form input[name=original_price]', '59.00');
+    await setVal('#book-form input[name=stock]', '6');
+    await setVal('#book-form input[name=tags]', '测试');
+    await setVal('#book-form textarea[name=intro]', '由 E2E 创建的测试图书。');
+    await submit('#book-form');
+    await sleep(1200);
+    check('新增后回到列表', (await evalJs('location.pathname')) === '/admin/books');
+    check('列表里出现新书', (await text('.table-wrap')).includes('自动化测试书'));
+
+    await go('/books?q=' + encodeURIComponent('自动化测试书'));
+    check('前台能搜到新书', (await count('.book-card')) === 1);
+
+    await go('/admin/books?q=' + encodeURIComponent('自动化测试书'));
+    await click('.table-wrap tbody tr [action$="/toggle"] button');
+    await sleep(1100);
+    check('下架后提示在售状态变化', (await text('.table-wrap')).includes('已下架'));
+    await go('/books?q=' + encodeURIComponent('自动化测试书'));
+    check('下架后前台搜不到', (await count('.book-card')) === 0);
+
+    await go('/admin/books?q=' + encodeURIComponent('自动化测试书'));
+    await click('.table-wrap tbody tr a[href$="/edit"]');
+    await sleep(900);
+    check('编辑页带出原值', (await evalJs('document.querySelector("#book-form input[name=title]").value')) === '自动化测试书');
+    await setVal('#book-form input[name=price]', '49.90');
+    await submit('#book-form');
+    await sleep(1200);
+    check('编辑保存成功', (await text('.table-wrap')).includes('¥49.90'));
+
+    await evalJs('window.confirm = () => true; true');
+    await click('.table-wrap tbody tr [action$="/delete"] button');
+    await sleep(1200);
+    check('删除后列表不再有该书', !(await text('.table-wrap')).includes('自动化测试书'));
 } finally {
     cdp.close();
 }

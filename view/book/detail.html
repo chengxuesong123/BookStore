@@ -1,0 +1,76 @@
+{include file="public/header" /}
+
+<div class="crumb">
+    <a href="/">首页</a> / <a href="/books">全部图书</a> / {$book.title}
+</div>
+
+<div class="detail">
+    <div class="detail-cover" style="background:{$book.cover}">
+        <span class="dc-cat">{$book.category_name|default='图书'}</span>
+        <div>
+            <div class="dc-title">{$book.title}</div>
+            <div class="dc-author">{$book.author}</div>
+        </div>
+    </div>
+
+    <div class="detail-info">
+        <span class="badge-cat">{$book.category_name|default='图书'}</span>
+        <h1>{$book.title}</h1>
+        <div class="detail-meta">{$book.author}　·　{$book.publisher}</div>
+
+        <div class="detail-price-row">
+            <span class="price">{:yuan($book.price)}</span>
+            <span class="price-old">{:yuan($book.original_price)}</span>
+            {if $book.stock > 0}
+            <span class="stock">库存 {$book.stock} 本</span>
+            {else /}
+            <span class="stock stock-out">暂时缺货</span>
+            {/if}
+        </div>
+
+        <form class="buy-row" method="post" action="/cart/add" data-once>
+            <input type="hidden" name="book_id" value="{$book.id}">
+            <input type="hidden" name="from" value="/book/{$book.id}">
+            <div class="qty">
+                <button type="button" data-qty-step="-1">−</button>
+                <input name="qty" value="1" inputmode="numeric" min="1" max="{$book.stock}">
+                <button type="button" data-qty-step="1">+</button>
+            </div>
+            <button class="btn btn-primary" type="submit" {if $book.stock <= 0}disabled{/if}>加入购物车</button>
+            <button class="btn btn-ghost" type="submit" name="buy_now" value="1" {if $book.stock <= 0}disabled{/if}>立即购买</button>
+        </form>
+
+        <div class="detail-cards">
+            <div class="info-card">
+                <h3>内容简介</h3>
+                <p>{$book.intro}</p>
+            </div>
+            <div class="info-card">
+                <h3>图书信息</h3>
+                <div class="info-grid">
+                    <div><div class="k">作者</div><div class="v">{$book.author}</div></div>
+                    <div><div class="k">出版社</div><div class="v">{$book.publisher}</div></div>
+                    <div><div class="k">分类</div><div class="v">{$book.category_name|default='图书'}{if $tagsText}，{$tagsText}{/if}</div></div>
+                    <div><div class="k">定价</div><div class="v">{:yuan($book.original_price)}（现价 {:yuan($book.price)}）</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{if $related}
+<section class="section">
+    <div class="section-head">
+        <div><h2>同类推荐</h2><p>看完这本，再看看这些。</p></div>
+        <a class="more" href="/books?cat={$book.category_id}">同类图书</a>
+    </div>
+    <div class="book-grid">
+        {volist name="related" id="b"}
+        {include file="public/book_card" /}
+        {/volist}
+    </div>
+</section>
+{/if}
+
+
+{include file="public/footer" /}
