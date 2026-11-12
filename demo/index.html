@@ -3,36 +3,93 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>墨香书屋 · 图书商城 Demo</title>
+  <title>墨屿书屋 · 图书商城 Demo</title>
   <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
 
-<header class="site-header">
+<div class="topbar">
+  <div class="wrap topbar-inner">
+    <span class="topbar-note">全场满 59 元包邮 · 新用户下单立减 10 元</span>
+    <span class="topbar-links">
+      <a href="#/orders">我的订单</a>
+      <span class="dot">·</span>
+      <a href="#/login" id="topbar-auth">登录 / 注册</a>
+    </span>
+  </div>
+</div>
+
+<header class="site-header" id="site-header">
   <div class="wrap header-inner">
-    <a class="logo" href="#/"><span class="seal">墨</span>墨香书屋</a>
-    <nav class="main-nav">
+    <a class="logo" href="#/">
+      <span class="logo-mark">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      </span>
+      <span class="logo-text">墨屿书屋<small>MOYU BOOKS</small></span>
+    </a>
+
+    <nav class="main-nav" id="main-nav">
       <a href="#/" data-nav="/">首页</a>
       <a href="#/books" data-nav="/books">全部图书</a>
       <a href="#/orders" data-nav="/orders">我的订单</a>
-      <a href="#/admin">后台预览</a>
-      <a href="#/cart" data-nav="/cart" class="cart-link">购物车<span class="cart-badge" id="cart-badge" style="display:none">0</span></a>
     </nav>
+
+    <div class="header-actions">
+      <button class="icon-btn" id="search-jump" aria-label="搜索图书">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.4-3.4"/></svg>
+      </button>
+      <a class="icon-btn cart-link" href="#/cart" aria-label="购物车">
+        <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        <span class="cart-badge" id="cart-badge">0</span>
+      </a>
+      <a class="btn-login" id="header-auth" href="#/login">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>
+        <span id="header-auth-text">登录</span>
+      </a>
+    </div>
   </div>
 </header>
 
-<main id="app"></main>
+<main id="app" class="page"></main>
 
 <footer class="site-footer">
-  <div class="wrap footer-inner">
-    <span>墨香书屋 · 前端原型 Demo（mock 数据，无真实后端）</span>
-    <span>技术栈：HTML + CSS + 原生 JS　·　正式实现：ThinkPHP 8</span>
-    <button class="reset-demo" data-action="reset-demo">重置演示数据</button>
+  <div class="wrap footer-grid">
+    <div class="footer-brand">
+      <div class="logo footer-logo">
+        <span class="logo-mark">墨</span>
+        <span class="logo-text">墨屿书屋<small>MOYU BOOKS</small></span>
+      </div>
+      <p>一个只卖纸质书的线上小店。挑书、加购、下单，剩下的交给我们打包。</p>
+    </div>
+    <div class="footer-col">
+      <h4>逛一逛</h4>
+      <a href="#/">首页</a>
+      <a href="#/books">全部图书</a>
+      <a href="#/orders">我的订单</a>
+      <a href="#/cart">购物车</a>
+    </div>
+    <div class="footer-col">
+      <h4>关于</h4>
+      <span>配送说明</span>
+      <span>退换政策</span>
+      <span>联系我们</span>
+    </div>
+    <div class="footer-col">
+      <h4>演示信息</h4>
+      <span>前端原型 · mock 数据</span>
+      <span>HTML + CSS + JS + jQuery</span>
+      <button class="link-btn" data-action="reset-demo">重置演示数据</button>
+    </div>
+  </div>
+  <div class="wrap footer-bottom">
+    <span>© 2026 墨屿书屋 · Demo</span>
+    <span>正式版本：ThinkPHP 8 + MySQL</span>
   </div>
 </footer>
 
-<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<script src="assets/vendor/jquery.min.js"></script>
 <script src="assets/mock-data.js"></script>
 <script src="assets/app.js"></script>
 </body>
