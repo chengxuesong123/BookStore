@@ -29,7 +29,7 @@
                 </nav>
 
                 <div class="header-actions">
-                    <button class="icon-btn" type="button" aria-label="搜索" @click="searchOpen = !searchOpen">
+                    <button ref="searchBtn" class="icon-btn" type="button" aria-label="搜索" @click="searchOpen = !searchOpen">
                         <IconSearch />
                     </button>
                     <router-link class="icon-btn" to="/cart" aria-label="购物车">
@@ -44,7 +44,7 @@
                     <router-link v-if="auth.isAdmin" class="admin-chip" to="/admin">后台</router-link>
                 </div>
 
-                <form v-if="searchOpen" class="search-overlay" @submit.prevent="submitSearch">
+                <form v-if="searchOpen" ref="searchForm" class="search-overlay" @submit.prevent="submitSearch">
                     <input ref="searchInput" v-model="keyword" type="search" placeholder="搜书名、作者、出版社">
                     <button class="btn btn-primary" type="submit">搜索</button>
                 </form>
@@ -91,7 +91,7 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import IconSearch from '../components/IconSearch.vue';
 import IconCart from '../components/IconCart.vue';
@@ -106,6 +106,8 @@ const router = useRouter();
 const searchOpen = ref(false);
 const keyword = ref('');
 const searchInput = ref(null);
+const searchForm = ref(null);
+const searchBtn = ref(null);
 const scrolled = ref(false);
 
 const initial = computed(() => (auth.user ? auth.user.nickname.slice(0, 1) : '墨'));
@@ -117,10 +119,26 @@ watch(searchOpen, async (open) => {
     }
 });
 
+// 点搜索框和搜索按钮以外的地方，收起搜索
+function onDocumentDown(event) {
+    if (!searchOpen.value) return;
+    const inForm = searchForm.value && searchForm.value.contains(event.target);
+    const inButton = searchBtn.value && searchBtn.value.contains(event.target);
+    if (!inForm && !inButton) searchOpen.value = false;
+}
+
+// 页面切换（含点导航、点书卡）也收起
+watch(() => route.fullPath, () => { searchOpen.value = false; });
+
 onMounted(() => {
+    document.addEventListener('mousedown', onDocumentDown);
     window.addEventListener('scroll', () => {
         scrolled.value = window.scrollY > 10;
     }, { passive: true });
+});
+
+onUnmounted(() => {
+    document.removeEventListener('mousedown', onDocumentDown);
 });
 
 function submitSearch() {

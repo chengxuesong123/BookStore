@@ -10,9 +10,16 @@
             </div>
         </div>
         <div class="hero-books">
-            <router-link v-for="(b, i) in floats" :key="b.id" :to="`/book/${b.id}`" class="float-book" :class="`f${i}`" :style="{ background: b.cover }">
-                <span class="fb-cat">{{ b.category_name }}</span>
-                <span class="fb-title">{{ b.title }}</span>
+            <router-link
+                v-for="(b, i) in floats"
+                :key="b.id"
+                :to="`/book/${b.id}`"
+                class="book-float"
+                :class="`b${i + 1}`"
+                :style="{ background: b.cover }"
+            >
+                <span class="bf-cat">{{ b.category_name }}</span>
+                <span class="bf-title">{{ b.title }}</span>
             </router-link>
         </div>
     </section>
@@ -23,13 +30,20 @@
             <router-link class="more" to="/books">全部图书</router-link>
         </div>
         <div class="promo-grid">
-            <router-link v-for="(p, i) in promos" :key="p.category.id" :to="`/books?cat=${p.category.id}`" class="promo-card" :class="`c${i}`">
-                <div class="promo-cover" :style="{ background: p.book ? p.book.cover : '' }">{{ p.book ? p.book.title : '待上架' }}</div>
-                <div class="promo-body">
-                    <div class="promo-cat">{{ p.category.name }}</div>
+            <router-link
+                v-for="(p, i) in promos"
+                :key="p.category.id"
+                :to="`/books?cat=${p.category.id}`"
+                class="promo-card"
+                :class="['promo-mint', 'promo-peach', 'promo-sky'][i % 3]"
+            >
+                <span class="promo-badge">{{ p.category.name }}</span>
+                <div class="mini-book" :style="{ background: p.book ? p.book.cover : 'linear-gradient(150deg,#cfd9e6,#9fb0c4)' }"></div>
+                <div>
                     <h3>{{ p.book ? p.book.title : '这个分类还在补货' }}</h3>
                     <p>{{ p.book ? p.book.author + ' · ' + money(p.book.price) : '过几天再来看看' }}</p>
                 </div>
+                <span class="btn btn-sm btn-ghost">去看看</span>
             </router-link>
         </div>
     </section>
@@ -39,8 +53,14 @@
             <div><h2>新书上架</h2><p>刚拆封的那几本。</p></div>
             <router-link class="more" to="/books">更多</router-link>
         </div>
-        <div class="book-grid">
-            <BookCard v-for="b in newest" :key="b.id" :book="b" />
+        <div v-if="!loading && !newest.length" class="empty">
+            <div class="empty-ico">📚</div>
+            <h3>书还没到货</h3>
+            <p>{{ loadError || '后台暂时没有可展示的图书。' }}</p>
+            <button class="btn btn-primary" style="margin-top:14px" @click="load">重新加载</button>
+        </div>
+        <div v-else class="book-grid">
+            <BookCard v-for="(b, i) in newest" :key="b.id" :book="b" :delay="i * 40" />
         </div>
     </section>
 
@@ -49,8 +69,13 @@
             <div><h2>热销榜单</h2><p>大家正在读的。</p></div>
             <router-link class="more" to="/books">更多</router-link>
         </div>
-        <div class="book-grid">
-            <BookCard v-for="b in hot" :key="b.id" :book="b" />
+        <div v-if="!loading && !hot.length" class="empty">
+            <div class="empty-ico">🔥</div>
+            <h3>还没有热销数据</h3>
+            <p>{{ loadError || '等有订单之后再来看看。' }}</p>
+        </div>
+        <div v-else class="book-grid">
+            <BookCard v-for="(b, i) in hot" :key="b.id" :book="b" :delay="i * 40" />
         </div>
     </section>
 
@@ -71,29 +96,38 @@ const newest = ref([]);
 const hot = ref([]);
 const categories = ref([]);
 const promos = ref([]);
+const loading = ref(true);
+const loadError = ref('');
 
-const floats = computed(() => newest.value.slice(0, 2).concat(hot.value.slice(0, 1)));
-
+const floats = computed(() => newest.value.slice(0, 2).concat(hot.value.slice(0, 1)).slice(0, 3));
 const money = (n) => '¥' + Number(n || 0).toFixed(2);
 
-onMounted(async () => {
+async function load() {
+    loading.value = true;
+    loadError.value = '';
     try {
         const [a, b, c] = await Promise.all([
             http.get('/books', { params: { page_size: 8 } }),
             http.get('/books', { params: { page_size: 8, sort: 'stock' } }),
             http.get('/categories'),
         ]);
-        newest.value = a.data.list;
-        hot.value = b.data.list;
-        categories.value = c.data.list;
-        promos.value = categories.value.slice(0, 3).map((category) => ({ category, book: null }));
+        newest.value = a.data.list || [];
+        hot.value = b.data.list || [];
+        categories.value = c.data.list || [];
 
+        promos.value = categories.value.slice(0, 3).map((category) => ({ category, book: null }));
         const firsts = await Promise.all(
             promos.value.map((p) => http.get('/books', { params: { cat: p.category.id, page_size: 1 } })),
         );
         promos.value = promos.value.map((p, i) => ({ ...p, book: firsts[i].data.list[0] || null }));
     } catch (e) {
-        // 首页失败时保持空状态，不挡浏览
+        newest.value = [];
+        hot.value = [];
+        loadError.value = e.msg || '接口请求失败，检查后端是否启动。';
+    } finally {
+        loading.value = false;
     }
-});
+}
+
+onMounted(load);
 </script>

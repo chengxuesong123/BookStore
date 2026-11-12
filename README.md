@@ -68,6 +68,14 @@ pnpm dev
 - **CSRF**：API 写请求带 `X-CSRF-Token` 头，缺失返回 419
 - **库表**：`users.avatar`、`orders.source`（cart/direct）
 
+## v3 改了什么（本版）
+
+- **修好首页不显示图书**：书卡补回 .in 入场类（样式里 opacity:0 靠它打开），Hero 书堆类名改回 .book-float，分类卡改用 .mini-book
+- **加载/失败状态**：接口挂了或没数据时显示可读提示 + 「重新加载」，不再白屏
+- **头像放大**：导航头像 36px → 40px（移动端 36、后台顶栏 34）
+- **搜索自动收起**：点搜索框和图标以外的任意位置、切换页面、提交搜索都会关闭浮层
+- **Demo 模式**：VITE_MOCK=1 时前端用浏览器内 mock 数据，后端完全不用启动
+
 ## 接口概览
 
 `GET /api/health`、`/api/auth/*`、`/api/books`、`/api/cart`、`/api/checkout/{cart,direct}`、`/api/orders/*`、`/api/user/{profile,avatar}`、`/api/admin/*`。详见 `docs/产品设计-v2.md` 第 5 节。
@@ -80,10 +88,22 @@ node tests/api.mjs --reset
 
 # 浏览器端到端（先后端、前端、Edge 都起来）
 & "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" --headless=new --remote-debugging-port=9333 --remote-allow-origins=* --user-data-dir=D:\wamp\php\BookStore\tests\.edge-profile
-node tests/e2e-v2.mjs --reset
+node tests/e2e.mjs --reset
 ```
 
-当前覆盖：接口 28 项（鉴权/403/419/图书/购物车/立即购买不串车/扣库存/取消回补/越权/头像 MIME/分类）；E2E 43 项（图标与对齐、红点显隐、注册与头像入口、昵称、加购、立即购买、后台侧边栏与刷新、权限、退出）。
+当前覆盖：接口 28 项（鉴权/403/419/图书/购物车/立即购买不串车/扣库存/取消回补/越权/头像 MIME/分类）；E2E 52 项（书卡可见性、Hero 漂浮书、分类小书封、图标对齐、头像 40px、搜索外点/路由收起、红点显隐、注册与头像入口、昵称、加购、立即购买、后台侧边栏与刷新、权限、退出）。Demo 冒烟 10 项（
+ode tests/demo-check.mjs）。
+
+## Demo（不需要后端）
+
+`powershell
+cd bookstor
+pnpm dev:mock          # http://127.0.0.1:5174
+# 或先构建再预览
+pnpm build:mock && pnpm preview:mock   # http://127.0.0.1:4174
+`
+
+mock 数据存在 localStorage（键 moyu-mock-v3），管理员仍是 dmin@moyu.com / admin123；清空演示数据就在控制台删掉这个键再刷新。
 
 ## 与设计文档的差异
 

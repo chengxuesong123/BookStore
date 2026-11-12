@@ -146,6 +146,25 @@ try {
     check('空购物车没有红点', (await count('.cart-badge.show')) === 0);
     check('游客显示登录按钮', (await count('.btn-login')) === 1);
 
+    // v3：书卡必须真的可见（样式里 opacity:0 靠 .in 打开）
+    check('书卡已入场可见', await waitFor(async () => (await evalJs('getComputedStyle(document.querySelector(".book-card")).opacity')) === '1', 8000));
+    const firstCardBox = await evalJs('(function(){var r=document.querySelector(".book-card").getBoundingClientRect();return {w:Math.round(r.width),h:Math.round(r.height)};})()');
+    check('书卡有实际尺寸', firstCardBox.w > 150 && firstCardBox.h > 200, JSON.stringify(firstCardBox));
+    check('Hero 漂浮书 3 本', (await count('.hero-books .book-float.b1, .hero-books .book-float.b2, .hero-books .book-float.b3')) === 3);
+    const floatBox = await evalJs('(function(){var r=document.querySelector(".book-float").getBoundingClientRect();return {w:Math.round(r.width),h:Math.round(r.height)};})()');
+    check('漂浮书尺寸正常', floatBox.w > 120 && floatBox.h > 180, JSON.stringify(floatBox));
+    check('分类卡 mini-book 3 个', (await count('.promo-card .mini-book')) === 3);
+
+    // v3：搜索浮层点外部收起
+    await click('.header-actions .icon-btn[aria-label="搜索"]');
+    check('点图标打开搜索', (await count('.search-overlay')) === 1);
+    await evalJs('document.querySelector(".hero h1").dispatchEvent(new MouseEvent("mousedown",{bubbles:true})); true');
+    check('点页面其他位置收起搜索', await waitFor(async () => (await count('.search-overlay')) === 0, 4000));
+    await click('.header-actions .icon-btn[aria-label="搜索"]');
+    await click('.main-nav a[href="/books"]');
+    check('切换页面后搜索收起', await waitFor(async () => (await count('.search-overlay')) === 0, 8000));
+    await go('/');
+
     console.log('\n[2] 注册、头像与用户中心');
     await go('/register');
     await setVal('input[name=email]', `e2e-${Date.now()}@test.com`);
@@ -155,6 +174,8 @@ try {
     await submit('form');
     check('注册后回首页', await waitFor(async () => (await path()) === '/', 12000));
     check('顶栏变成头像按钮', await waitFor(async () => (await count('.header-actions .avatar-btn')) === 1, 8000));
+    const avatarSize = await evalJs('Math.round(document.querySelector(".avatar-btn").getBoundingClientRect().width)');
+    check('头像放大到 40px', avatarSize === 40, String(avatarSize));
     check('无头像时显示昵称首字', (await text('.avatar-btn .avatar-initial')).trim() === '小');
 
     await click('.header-actions .avatar-btn');
@@ -241,7 +262,7 @@ try {
 const jsErrors = exceptions.filter((e) => !/favicon/i.test(e));
 check('没有 JS 运行时异常', jsErrors.length === 0, jsErrors.join(' | '));
 
-console.log(`\n===== E2E v2：${pass} 通过，${failures.length} 失败 =====`);
+console.log(`\n===== E2E v3：${pass} 通过，${failures.length} 失败 =====`);
 if (failures.length) {
     failures.forEach((f) => console.log('  ✗ ' + f));
     process.exit(1);

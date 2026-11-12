@@ -10,6 +10,7 @@
 # 前端依赖与构建产物
 /bookstor/node_modules/
 /bookstor/dist/
+/bookstor/dist-demo/
 /bookstor/.vite/
 
 # 上传目录（保留 .gitkeep）
@@ -35,3 +36,6 @@ Thumbs.db
 .DS_Store
 .idea/
 .vscode/
+
+# ????
+tests/shots/

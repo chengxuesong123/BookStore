@@ -1,12 +1,15 @@
 {
   "name": "bookstor",
   "private": true,
-  "version": "2.0.0",
+  "version": "3.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 5173",
+    "dev:mock": "vite --host 127.0.0.1 --port 5174 --mode mock",
     "build": "vite build",
-    "preview": "vite preview --host 127.0.0.1 --port 4173"
+    "build:mock": "vite build --mode mock --outDir dist-demo",
+    "preview": "vite preview --host 127.0.0.1 --port 4173",
+    "preview:mock": "vite preview --outDir dist-demo --host 127.0.0.1 --port 4174"
   },
   "dependencies": {
     "axios": "^1.7.7",

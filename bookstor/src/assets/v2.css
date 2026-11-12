@@ -389,3 +389,8 @@
     .account-grid { grid-template-columns: 1fr; }
     .admin-body { padding: 16px; }
 }
+
+/* v3：头像比 v2 再大一点，命中区仍然对齐 */
+.avatar-btn { width: 40px; height: 40px; }
+.avatar-btn.small { width: 34px; height: 34px; }
+@media (max-width: 760px) { .avatar-btn { width: 36px; height: 36px; } }
