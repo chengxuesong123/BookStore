@@ -68,9 +68,9 @@ function is_admin(): bool
  */
 function cart_count(): int
 {
-    $count = 0;
-    foreach ((array) Session::get('cart', []) as $line) {
-        $count += (int) ($line['qty'] ?? 0);
+    if (class_exists(\app\service\CartService::class)) {
+        return \app\service\CartService::count();
     }
-    return $count;
+
+    return 0;
 }

@@ -1,0 +1,46 @@
+{include file="public/header" /}
+
+<div class="page-head">
+    <div>
+        <h1>我的订单</h1>
+        <div class="sub">共 {$total} 单</div>
+    </div>
+</div>
+
+{if $empty}
+<div class="empty">
+    <div class="empty-ico">📦</div>
+    <h3>还没有订单</h3>
+    <p>下单后会出现在这里。</p>
+    <a class="btn btn-primary" href="/books" style="margin-top:14px">去选书</a>
+</div>
+{else /}
+{volist name="list" id="row"}
+<div class="order-card">
+    <div class="order-head">
+        <span class="no">{$row.order.order_no}</span>
+        <span>{$row.order.created_at}</span>
+        <span class="spacer"></span>
+        <span class="pill pill-{$row.order.status}">{:order_status_text($row.order['status'])}</span>
+    </div>
+    <div class="order-body">
+        {volist name="row.items" id="it"}
+        <div class="order-line">
+            <div class="thumb" style="background:{$it.cover}"></div>
+            <div class="nm">{$it.book_title} <small>× {$it.quantity}</small></div>
+            <div class="price">{:yuan($it.price * $it.quantity)}</div>
+        </div>
+        {/volist}
+    </div>
+    <div class="order-foot">
+        <div class="total">合计<b>{:yuan($row.order.total_amount)}</b></div>
+        <div class="order-actions">
+            <a class="btn btn-sm btn-ghost" href="/order/{$row.order.id}">订单详情</a>
+        </div>
+    </div>
+</div>
+{/volist}
+<div class="pager">{$pager|raw}</div>
+{/if}
+
+{include file="public/footer" /}

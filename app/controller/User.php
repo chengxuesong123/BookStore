@@ -56,7 +56,7 @@ class User extends BaseController
         }
 
         Session::set('user', $user->toSession());
-        $this->mergeGuestCart();
+        $this->mergeGuestCart((int) $user['id']);
 
         if ($user->isAdmin()) {
             flash_set('管理员登录成功，已进入后台');
@@ -124,7 +124,7 @@ class User extends BaseController
         ]);
 
         Session::set('user', $user->toSession());
-        $this->mergeGuestCart();
+        $this->mergeGuestCart((int) $user['id']);
         flash_set('注册成功，已自动登录');
 
         return redirect($next !== '' ? $next : '/');
@@ -176,11 +176,10 @@ class User extends BaseController
     /**
      * 游客 session 购物车合并到登录用户（M4 起生效，这里留接口）
      */
-    private function mergeGuestCart(): void
+    private function mergeGuestCart(int $userId): void
     {
-        // 购物车服务在 M4 实现，登录时由 CartService 合并 session 中的游客购物车
         if (class_exists(\app\service\CartService::class)) {
-            (new \app\service\CartService())->mergeGuestCart();
+            \app\service\CartService::mergeGuestCart($userId);
         }
     }
 }

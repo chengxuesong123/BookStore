@@ -54,6 +54,9 @@ function connect(url) {
         const pending = new Map();
         ws.onmessage = (ev) => {
             const msg = JSON.parse(ev.data);
+            if (msg.method === 'Page.javascriptDialogOpening') {
+                ws.send(JSON.stringify({ id: ++seq, method: 'Page.handleJavaScriptDialog', params: { accept: true } }));
+            }
             if (msg.method === 'Runtime.exceptionThrown') {
                 exceptions.push(msg.params.exceptionDetails.exception?.description || msg.params.exceptionDetails.text);
             }
@@ -70,7 +73,14 @@ function connect(url) {
                 send(method, params = {}) {
                     return new Promise((res, rej) => {
                         const id = ++seq;
-                        pending.set(id, { res, rej });
+                        const timer2 = setTimeout(() => {
+                            pending.delete(id);
+                            rej(new Error('CDP 超时：' + method));
+                        }, 20000);
+                        pending.set(id, {
+                            res: (v) => { clearTimeout(timer2); res(v); },
+                            rej: (e) => { clearTimeout(timer2); rej(e); },
+                        });
                         ws.send(JSON.stringify({ id, method, params }));
                     });
                 },
@@ -101,6 +111,14 @@ const count = async (sel) => evalJs(`document.querySelectorAll(${JSON.stringify(
 const click = async (sel) => { await evalJs(`document.querySelector(${JSON.stringify(sel)}).click(); true`); };
 const setVal = async (sel, val) => { await evalJs(`document.querySelector(${JSON.stringify(sel)}).value = ${JSON.stringify(val)}; true`); };
 const submit = async (sel) => { await evalJs(`document.querySelector(${JSON.stringify(sel)}).requestSubmit(); true`); };
+const waitFor = async (fn, timeout = 8000) => {
+    const start = Date.now();
+    while (Date.now() - start < timeout) {
+        try { if (await fn()) return true; } catch (e) { /* 页面切换中，稍后再试 */ }
+        await new Promise((r) => setTimeout(r, 250));
+    }
+    return false;
+};
 
 try {
     console.log('\n[1] 首页与公共布局');
@@ -292,6 +310,121 @@ try {
     await click('.table-wrap tbody tr [action$="/delete"] button');
     await sleep(1200);
     check('删除后列表不再有该书', !(await text('.table-wrap')).includes('自动化测试书'));
+
+    console.log('\n[13] 游客购物车与登录合并');
+    await click('a[href="/logout"]');
+    await sleep(900);
+    await go('/book/3');
+    await click('form[action="/cart/add"] button[type=submit]');
+    await sleep(1100);
+    check('加购后仍在详情页', (await evalJs('location.pathname')) === '/book/3');
+    check('角标变 1', (await text('#cart-badge')).trim() === '1');
+
+    await go('/book/5');
+    await setVal('form[action="/cart/add"] input[name=qty]', '2');
+    await click('form[action="/cart/add"] button[type=submit]');
+    await sleep(1100);
+    check('角标累加到 3', (await text('#cart-badge')).trim() === '3');
+
+    await go('/cart');
+    check('购物车两行', (await count('.cart-row')) === 2);
+    check('游客看到登录后结算', (await text('.summary')).includes('登录后结算'));
+    check('合计金额正确', (await text('.sum-total .price')).includes('127.00'));
+
+    await go('/checkout');
+    await sleep(700);
+    check('未登录结算跳登录页', (await evalJs('location.pathname')) === '/login');
+    check('登录后回到结算', (await evalJs('location.search')).includes('next'));
+    await setVal('#login-form input[name=email]', 'reader@test.com');
+    await setVal('#login-form input[name=password]', 'test123456');
+    await submit('#login-form');
+    await sleep(1300);
+    await go('/cart');
+    check('登录后购物车已合并', (await count('.cart-row')) === 2);
+    check('登录后显示去结算', (await text('.summary')).includes('去结算'));
+
+    console.log('\n[14] 结算下单');
+    await go('/checkout');
+    check('结算页有表单', (await count('#checkout-form')) === 1);
+    check('收货人预填昵称', (await evalJs('document.querySelector("#checkout-form input[name=receiver]").value')) === '小鱼');
+    await setVal('#checkout-form input[name=phone]', '123');
+    await setVal('#checkout-form textarea[name=address]', '浙江省杭州市西湖区文三路 1 号');
+    await submit('#checkout-form');
+    await sleep(1200);
+    check('手机号错误被拦下', (await count('.field.has-error')) >= 1);
+
+    await setVal('#checkout-form input[name=phone]', '13800001111');
+    await setVal('#checkout-form input[name=remark]', '工作日送货');
+    await submit('#checkout-form');
+    await sleep(1400);
+    const orderPath = await evalJs('location.pathname');
+    check('下单后进入订单详情', /^\/order\/\d+$/.test(orderPath));
+    check('订单号已生成', (await text('.page-head .sub')).startsWith('MY'));
+    check('订单状态为待付款', (await text('.detail-card .pill')).includes('待付款'));
+    check('订单含两本书', (await count('.order-line')) >= 2);
+    check('收货信息已保存', (await text('.addr-grid')).includes('13800001111'));
+
+    console.log('\n[15] 订单状态流转');
+    await click('.detail-card form[action$="/pay"] button');
+    check('付款后进入待发货', await waitFor(async () => (await text('.detail-card .pill')).includes('待发货')));
+
+    await click('a[href="/logout"]');
+    await sleep(900);
+    await go('/login');
+    await setVal('#login-form input[name=email]', 'admin@moyu.com');
+    await setVal('#login-form input[name=password]', 'admin123');
+    await submit('#login-form');
+    await sleep(1300);
+    check('管理员进后台', (await evalJs('location.pathname')) === '/admin');
+    await go('/admin/orders');
+    check('后台待发货筛选可用', (await count('.table-wrap tbody tr')) >= 1);
+    await click('.table-wrap tbody tr a[href^="/admin/orders/"]');
+    await sleep(1000);
+    check('后台详情有标记发货', (await count('form[action$="/ship"]')) === 1);
+    await click('form[action$="/ship"] button');
+    await sleep(1200);
+    check('发货后状态变为已发货', (await text('.admin-head .who')).includes('已发货'));
+
+    await click('a[href="/logout"]');
+    await sleep(900);
+    await go('/login');
+    await setVal('#login-form input[name=email]', 'reader@test.com');
+    await setVal('#login-form input[name=password]', 'test123456');
+    await submit('#login-form');
+    await sleep(1300);
+    await go(orderPath);
+    await click('form[action$="/receive"] button');
+    await sleep(1200);
+    check('确认收货后已完成', (await text('.detail-card .pill')).includes('已完成'));
+
+    console.log('\n[16] 取消订单回补库存');
+    await go('/book/6');
+    const stockText = await text('.detail-price-row');
+    const stockBefore = parseInt((stockText.match(/库存 (\d+) 本/) || [])[1], 10);
+    await click('form[action="/cart/add"] button[type=submit]');
+    await sleep(1100);
+    await go('/checkout');
+    await setVal('#checkout-form input[name=phone]', '13800001111');
+    await setVal('#checkout-form textarea[name=address]', '浙江省杭州市西湖区文三路 2 号');
+    await submit('#checkout-form');
+    await sleep(1400);
+    const cancelPath = await evalJs('location.pathname');
+    await evalJs('window.confirm = () => true; true');
+    await click('form[action$="/cancel"] button');
+    check('取消后状态已取消', await waitFor(async () => (await text('.detail-card .pill')).includes('已取消')));
+    check('取消后提示回补库存', (await text('#toast')).includes('库存已回补'));
+    await go('/book/6');
+    check('库存已回补到 ' + stockBefore, (await text('.detail-price-row')).includes('库存 ' + stockBefore + ' 本'));
+
+    console.log('\n[17] 我的订单与越权');
+    await go('/orders');
+    check('订单列表 2 单', (await count('.order-card')) === 2);
+    check('列表显示订单号', (await text('.order-card .no')).startsWith('MY'));
+    check('列表有状态标签', (await count('.order-card .pill')) === 2);
+    await go(cancelPath);
+    check('自己的订单可看', (await evalJs('location.pathname')) === cancelPath);
+    const foreign = await evalJs('fetch("/order/9999").then(r => r.status)');
+    check('不存在的订单返回 404', foreign === 404);
 } finally {
     cdp.close();
 }
