@@ -33,6 +33,7 @@ const routes = [
             { path: 'books/:id/edit', name: 'admin-book-edit', component: () => import('../views/admin/BookForm.vue'), meta: { title: '编辑图书' } },
             { path: 'orders', name: 'admin-orders', component: () => import('../views/admin/Orders.vue'), meta: { title: '订单管理' } },
             { path: 'orders/:id', name: 'admin-order', component: () => import('../views/admin/OrderDetail.vue'), meta: { title: '订单详情' } },
+            { path: 'users', name: 'admin-users', component: () => import('../views/admin/Users.vue'), meta: { title: '用户管理' } },
             { path: 'categories', name: 'admin-categories', component: () => import('../views/admin/Categories.vue'), meta: { title: '分类管理' } },
             { path: ':pathMatch(.*)*', name: 'admin-404', component: () => import('../views/admin/NotFound.vue'), meta: { title: '页面不存在' } },
         ],

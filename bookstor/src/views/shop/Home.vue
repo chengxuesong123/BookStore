@@ -3,7 +3,7 @@
         <div class="hero-copy">
             <span class="eyebrow">MOYU BOOKS · 慢慢读</span>
             <h1>把一本书<br>读到卷边。</h1>
-            <p>文学、历史、科技、经济、童书、社科。十八本精选纸书，从任意一本开始。</p>
+            <p>文学、历史、科技、经济、童书、社科。</p>
             <div class="hero-actions">
                 <router-link class="btn btn-primary" to="/books">开始选书</router-link>
                 <router-link class="btn btn-ghost" to="/books?sort=price-asc">看看便宜的</router-link>
@@ -16,7 +16,7 @@
                 :to="`/book/${b.id}`"
                 class="book-float"
                 :class="`b${i + 1}`"
-                :style="{ background: b.cover }"
+                :style="coverStyle(b)"
             >
                 <span class="bf-cat">{{ b.category_name }}</span>
                 <span class="bf-title">{{ b.title }}</span>
@@ -38,7 +38,7 @@
                 :class="['promo-mint', 'promo-peach', 'promo-sky'][i % 3]"
             >
                 <span class="promo-badge">{{ p.category.name }}</span>
-                <div class="mini-book" :style="{ background: p.book ? p.book.cover : 'linear-gradient(150deg,#cfd9e6,#9fb0c4)' }"></div>
+                <div class="mini-book" :style="p.book ? coverStyle(p.book) : coverStyle('补货中')"></div>
                 <div>
                     <h3>{{ p.book ? p.book.title : '这个分类还在补货' }}</h3>
                     <p>{{ p.book ? p.book.author + ' · ' + money(p.book.price) : '过几天再来看看' }}</p>
@@ -91,6 +91,7 @@
 import { computed, onMounted, ref } from 'vue';
 import BookCard from '../../components/BookCard.vue';
 import { http } from '../../api/client';
+import { coverStyle } from '../../utils/cover';
 
 const newest = ref([]);
 const hot = ref([]);

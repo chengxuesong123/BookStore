@@ -61,7 +61,7 @@ await send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1800, de
 console.log('\n[v3 Demo] mock 模式');
 // 每次从干净存档开始，避免上一次登录/购物车影响断言
 await go('/');
-await evalJs("localStorage.removeItem('moyu-mock-v3'); true");
+await evalJs("localStorage.removeItem('moyu-mock-v4'); true");
 await send('Page.reload', { ignoreCache: true });
 await sleep(1200);
 check('首页 16 张书卡可见', await waitFor(async () => (await count('.book-card')) === 16 && (await evalJs('getComputedStyle(document.querySelector(".book-card")).opacity')) === '1'));
@@ -81,6 +81,17 @@ check('mock 登录进后台', await waitFor(async () => (await evalJs('location.
 check('概览 4 张卡', await waitFor(async () => (await count('.stat-card')) === 4));
 const adminShot = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
 writeFileSync('tests/shots/v3-admin.png', Buffer.from(adminShot.data, 'base64'));
+
+// v4：用户管理 + 自动封面表单
+await go('/admin/users');
+check('Demo 用户管理有数据', await waitFor(async () => (await count('.table-wrap tbody tr')) >= 2));
+const usersShot = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
+writeFileSync('tests/shots/v4-users.png', Buffer.from(usersShot.data, 'base64'));
+
+await go('/admin/books/new');
+check('Demo 图书表单无封面输入', await waitFor(async () => (await count('#book-form')) === 1) && (await count('#book-form input[name=cover]')) === 0);
+const formShot = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
+writeFileSync('tests/shots/v4-bookform.png', Buffer.from(formShot.data, 'base64'));
 
 await go('/book/3');
 check('mock 详情页可读', await waitFor(async () => (await text('.detail-info h1')).includes('百年孤独')));

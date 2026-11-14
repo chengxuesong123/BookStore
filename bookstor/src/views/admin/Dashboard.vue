@@ -23,6 +23,7 @@
             <div class="account-links">
                 <router-link to="/admin/books">图书管理</router-link>
                 <router-link to="/admin/orders?status=paid">待发货订单</router-link>
+                <router-link to="/admin/users">用户管理</router-link>
                 <router-link to="/admin/categories">分类管理</router-link>
             </div>
             <p class="muted" style="margin:10px 0 0">侧边栏一直都在，点哪里都不会把后台弄丢。</p>

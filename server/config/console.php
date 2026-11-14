@@ -6,5 +6,6 @@ return [
     // 指令定义
     'commands' => [
         \app\command\DbInit::class,
+        \app\command\CoverBackfill::class,
     ],
 ];

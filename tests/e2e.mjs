@@ -150,6 +150,7 @@ try {
     check('书卡已入场可见', await waitFor(async () => (await evalJs('getComputedStyle(document.querySelector(".book-card")).opacity')) === '1', 8000));
     const firstCardBox = await evalJs('(function(){var r=document.querySelector(".book-card").getBoundingClientRect();return {w:Math.round(r.width),h:Math.round(r.height)};})()');
     check('书卡有实际尺寸', firstCardBox.w > 150 && firstCardBox.h > 200, JSON.stringify(firstCardBox));
+    check('书卡封面已渲染（渐变占位）', (await evalJs('document.querySelector(".book-card .book-cover").getAttribute("style") || ""')).includes('linear-gradient'));
     check('Hero 漂浮书 3 本', (await count('.hero-books .book-float.b1, .hero-books .book-float.b2, .hero-books .book-float.b3')) === 3);
     const floatBox = await evalJs('(function(){var r=document.querySelector(".book-float").getBoundingClientRect();return {w:Math.round(r.width),h:Math.round(r.height)};})()');
     check('漂浮书尺寸正常', floatBox.w > 120 && floatBox.h > 180, JSON.stringify(floatBox));
@@ -184,6 +185,23 @@ try {
     await setVal('.account-grid input[name=nickname]', '小鱼二号');
     await submit('.account-card form');
     check('昵称保存后顶栏更新', await waitFor(async () => (await text('.topbar-links')).includes('小鱼二号'), 8000));
+
+    // v4：头像上传后，用户中心与导航栏都要显示（回归：Content-Type 手写导致上传失败）
+    const pngB64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+    await evalJs(`(function(){
+        var b=atob('${pngB64}');
+        var arr=new Uint8Array(b.length);
+        for(var i=0;i<b.length;i++) arr[i]=b.charCodeAt(i);
+        var file=new File([arr],'avatar.png',{type:'image/png'});
+        var dt=new DataTransfer(); dt.items.add(file);
+        var input=document.querySelector('.account-card input[type=file]');
+        if(!input) return false;
+        input.files=dt.files;
+        input.dispatchEvent(new Event('change',{bubbles:true}));
+        return true;
+    })()`);
+    check('用户中心头像显示图片', await waitFor(async () => (await count('.account-grid .avatar-preview img')) === 1, 15000));
+    check('导航栏头像同步显示图片', await waitFor(async () => (await count('.header-actions .avatar-btn img')) === 1, 15000));
 
     console.log('\n[3] 加购与红点');
     await go('/book/3');
@@ -222,7 +240,7 @@ try {
     await setVal('input[name=password]', 'admin123');
     await submit('form');
     check('管理员登录进后台', await waitFor(async () => (await path()) === '/admin', 12000));
-    check('侧边栏 4 个入口', (await count('.admin-nav a')) === 4);
+    check('侧边栏 5 个入口', (await count('.admin-nav a')) === 5);
     check('概览统计 4 张卡', await waitFor(async () => (await count('.stat-card')) === 4));
     check('后台顶部有面包屑', (await text('.admin-top .crumb')).includes('后台'));
 
@@ -232,7 +250,7 @@ try {
 
     await reload();
     check('刷新后仍在图书管理', (await path()) === '/admin/books');
-    check('刷新后侧边栏还在', (await count('.admin-nav a')) === 4);
+    check('刷新后侧边栏还在', (await count('.admin-nav a')) === 5);
 
     await click('.admin-nav a[href="/admin/orders"]');
     check('进入订单管理', await waitFor(async () => (await path()) === '/admin/orders', 8000));
@@ -246,6 +264,19 @@ try {
     check('管理员前台有后台入口', await waitFor(async () => (await count('.admin-chip')) === 1, 8000));
     await click('.admin-chip');
     check('从后台入口能回后台', await waitFor(async () => (await path()) === '/admin', 8000));
+
+    console.log('\n[5.1] 用户管理');
+    await click('.admin-nav a[href="/admin/users"]');
+    check('进入用户管理', await waitFor(async () => (await path()) === '/admin/users', 8000));
+    check('用户表有数据', await waitFor(async () => (await count('.table-wrap tbody tr')) >= 2, 8000));
+    await click('.table-wrap tbody tr button');
+    check('打开用户编辑表单', await waitFor(async () => (await text('.info-card h3')).includes('编辑用户'), 5000));
+    await click('.info-card .form-actions button.btn-ghost');
+
+    console.log('\n[5.2] 图书表单不再手填封面');
+    await go('/admin/books/new');
+    check('表单没有封面输入框', await waitFor(async () => (await count('#book-form')) === 1, 8000) && (await count('#book-form input[name=cover]')) === 0);
+    check('表单展示自动封面预览', (await count('#book-form .cover-preview')) === 1);
 
     await evalJs('window.confirm = () => true; true');
     await click('.admin-side-foot a[href="/"]');
@@ -262,7 +293,7 @@ try {
 const jsErrors = exceptions.filter((e) => !/favicon/i.test(e));
 check('没有 JS 运行时异常', jsErrors.length === 0, jsErrors.join(' | '));
 
-console.log(`\n===== E2E v3：${pass} 通过，${failures.length} 失败 =====`);
+console.log(`\n===== E2E v4：${pass} 通过，${failures.length} 失败 =====`);
 if (failures.length) {
     failures.forEach((f) => console.log('  ✗ ' + f));
     process.exit(1);

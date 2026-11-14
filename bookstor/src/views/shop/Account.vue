@@ -104,7 +104,8 @@ async function upload(event) {
     try {
         const data = new FormData();
         data.append('avatar', file);
-        const res = await http.post('/user/avatar', data, { headers: { 'Content-Type': 'multipart/form-data' } });
+        // 不要手写 Content-Type：让浏览器带上 multipart boundary，否则后端解析不到文件
+        const res = await http.post('/user/avatar', data);
         auth.setUser(res.data.user);
         ui.toast('头像已更新');
     } catch (e) {

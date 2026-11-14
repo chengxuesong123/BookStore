@@ -10,6 +10,7 @@
                 <router-link to="/admin" exact-active-class="on">概览</router-link>
                 <router-link to="/admin/books" active-class="on">图书管理</router-link>
                 <router-link to="/admin/orders" active-class="on">订单管理</router-link>
+                <router-link to="/admin/users" active-class="on">用户管理</router-link>
                 <router-link to="/admin/categories" active-class="on">分类管理</router-link>
             </nav>
 
@@ -28,7 +29,7 @@
                 <div class="admin-user">
                     <span v-if="auth.user">{{ auth.user.nickname }}</span>
                     <router-link to="/account" class="avatar-btn small">
-                        <img v-if="auth.user && auth.user.avatar" :src="auth.user.avatar" alt="头像">
+                        <img v-if="auth.user && auth.user.avatar" :key="auth.user.avatar" :src="auth.user.avatar" alt="头像">
                         <span v-else class="avatar-initial">{{ initial }}</span>
                     </router-link>
                 </div>

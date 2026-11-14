@@ -100,7 +100,13 @@ customer.token = savedToken;
 check('缺 CSRF token 返回 419', csrfFail.status === 419);
 
 const books = await customer.get('/books?page_size=50');
-check('图书列表返回 18 本', books.body.data.total === 18, String(books.body.data.total));
+check('图书列表返回 1000 本', books.body.data.total === 1000, String(books.body.data.total));
+const catTotals = [];
+for (let cid = 1; cid <= 6; cid++) {
+    const r = await customer.get(`/books?cat=${cid}&page_size=200`);
+    catTotals.push(r.body.data.total);
+}
+check('每个分类至少 10 本', catTotals.every((n) => n >= 10), JSON.stringify(catTotals));
 const book = books.body.data.list.find((b) => b.stock >= 2) || books.body.data.list[0];
 check('图书字段完整', typeof book.price === 'number' && typeof book.stock === 'number' && !!book.title);
 
@@ -190,6 +196,32 @@ check('删除空分类', delCat.status === 200);
 const firstCat = cats.body.data.list[0];
 const delUsed = await admin.del(`/admin/categories/${firstCat.id}`);
 check('有书的分类拒绝删除', delUsed.status === 422);
+
+// 用户管理
+const users = await admin.get('/admin/users');
+check('后台用户列表可用', users.status === 200 && users.body.data.total >= 2, String(users.body.data.total));
+const target = users.body.data.list.find((u) => u.email === email);
+check('用户列表带订单数', target && typeof target.order_count === 'number');
+const editedUser = await admin.put(`/admin/users/${target.id}`, { nickname: '被管过的昵称', role: 'customer' });
+check('后台修改昵称成功', editedUser.status === 200 && editedUser.body.data.user.nickname === '被管过的昵称');
+const selfDemote = await admin.put('/admin/users/1', { nickname: '店长', role: 'customer' });
+check('不能修改自己的角色', selfDemote.status === 422);
+const badPwd = await admin.put(`/admin/users/${target.id}`, { nickname: '被管过的昵称', role: 'customer', password: '123' });
+check('重置密码长度校验', badPwd.status === 422);
+check('顾客不能访问用户管理', (await customer.get('/admin/users')).status === 403);
+
+// 新增图书：不再接收手填封面，服务端按书名自动取（取不到留空，前端占位）
+const created = await admin.post('/admin/books', {
+    title: '封面自动测试书', category_id: 1, author: '测试作者', price: 30, original_price: 40, stock: 5, status: 'on',
+});
+check('新增图书不填封面也能成功', created.status === 200 && typeof created.body.data.book.cover === 'string');
+check('封面字段不是手填值', created.body.data.book.cover !== '客户端手填');
+const createdId = created.body.data.book.id;
+await admin.del(`/admin/books/${createdId}`);
+
+// 封面解析（不依赖外网，直接喂样例 JSON）
+const coverParse = spawnSync(PHP, ['tests/cover-parse.php'], { cwd: ROOT, encoding: 'utf8' });
+check('封面解析逻辑正确', coverParse.status === 0 && coverParse.stdout.includes('cover-parse ok'), coverParse.stdout + coverParse.stderr);
 
 console.log(`\n===== 接口测试：${pass} 通过，${failures.length} 失败 =====`);
 if (failures.length) {

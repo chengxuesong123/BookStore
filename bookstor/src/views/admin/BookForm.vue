@@ -3,7 +3,7 @@
         <div class="admin-head">
             <div>
                 <h1>{{ isEdit ? '编辑图书' : '新增图书' }}</h1>
-                <div class="who">带 <span class="req">*</span> 的为必填；封面可填 CSS 渐变或图片地址</div>
+                <div class="who">带 <span class="req">*</span> 的为必填；封面由系统按书名自动获取，不用手填</div>
             </div>
             <router-link class="btn btn-ghost btn-sm" to="/admin/books">返回列表</router-link>
         </div>
@@ -56,9 +56,12 @@
                 </div>
 
                 <div class="field">
-                    <label>封面（CSS 渐变或图片地址）</label>
-                    <input v-model="form.cover" name="cover" id="cover-input" placeholder="linear-gradient(150deg, #8a3b2e, #5c2620) 或 /uploads/x.jpg">
-                    <div class="cover-preview" :style="coverStyle"></div>
+                    <label>封面</label>
+                    <div class="cover-preview" :style="previewStyle"></div>
+                    <p class="muted" style="margin:10px 0 0;font-size:12.5px">
+                        不用手填。保存时按书名自动调用 Open Library 封面，找不到再试 Google Books；都失败就用占位色块。
+                        <template v-if="isEdit">改了书名会重新获取。</template>
+                    </p>
                 </div>
 
                 <div class="field">
@@ -84,6 +87,7 @@
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { http } from '../../api/client';
+import { coverStyle } from '../../utils/cover';
 import { useUiStore } from '../../stores/ui';
 
 const route = useRoute();
@@ -109,14 +113,7 @@ const form = reactive({
     tags: '',
 });
 
-const coverStyle = computed(() => {
-    const v = (form.cover || '').trim();
-    if (!v) return { background: 'linear-gradient(150deg, #3d4f6b, #263349)' };
-    if (/^(https?:\/\/|\/)/.test(v)) {
-        return { backgroundImage: `url("${v}")`, backgroundSize: 'cover', backgroundPosition: 'center' };
-    }
-    return { background: v };
-});
+const previewStyle = computed(() => coverStyle({ title: form.title || '新书', cover: form.cover }));
 
 async function load() {
     try {

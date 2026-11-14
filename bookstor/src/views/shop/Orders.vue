@@ -22,7 +22,7 @@
         </div>
         <div class="order-body">
             <div v-for="it in o.items" :key="it.book_id + '-' + it.book_title" class="order-line">
-                <div class="thumb" :style="{ background: it.cover }"></div>
+                <div class="thumb" :style="coverStyle(it.cover || it.book_title)"></div>
                 <div class="nm">{{ it.book_title }} <small>× {{ it.quantity }}</small></div>
                 <div class="price">{{ money(it.line_total) }}</div>
             </div>
@@ -46,6 +46,7 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { http } from '../../api/client';
+import { coverStyle } from '../../utils/cover';
 
 const route = useRoute();
 const router = useRouter();

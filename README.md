@@ -68,7 +68,16 @@ pnpm dev
 - **CSRF**：API 写请求带 `X-CSRF-Token` 头，缺失返回 419
 - **库表**：`users.avatar`、`orders.source`（cart/direct）
 
-## v3 改了什么（本版）
+## v4 改了什么（本版）
+
+- **书库扩到 1000 本**：6 个分类各 166–167 本，种子由 `server/database/generate_seed.php` 生成
+- **封面自动获取**：新增/改名时按书名先查 Open Library，找不到再查 Google Books；都失败就留空，前台用稳定渐变占位
+- **后台不再手填封面**：图书表单删掉封面输入框，改为只读预览 + 说明；新增 `php think cover:backfill` 批量补封面
+- **前台封面统一渲染**：图片地址、CSS 渐变、空封面三种情况都由 `coverStyle()` 处理，任何书都有封面可看
+- **头像上传修复**：去掉手写的 multipart Content-Type（boundary 丢失导致上传失败），用户中心与导航栏同步立即显示
+- **后台用户管理**：`/admin/users` 可搜索、查看用户信息与订单数、改昵称/角色、重置密码；不能改自己角色、至少保留一个管理员
+
+## v3 改了什么（历史）
 
 - **修好首页不显示图书**：书卡补回 .in 入场类（样式里 opacity:0 靠它打开），Hero 书堆类名改回 .book-float，分类卡改用 .mini-book
 - **加载/失败状态**：接口挂了或没数据时显示可读提示 + 「重新加载」，不再白屏
@@ -78,7 +87,7 @@ pnpm dev
 
 ## 接口概览
 
-`GET /api/health`、`/api/auth/*`、`/api/books`、`/api/cart`、`/api/checkout/{cart,direct}`、`/api/orders/*`、`/api/user/{profile,avatar}`、`/api/admin/*`。详见 `docs/产品设计-v2.md` 第 5 节。
+`GET /api/health`、`/api/auth/*`、`/api/books`、`/api/cart`、`/api/checkout/{cart,direct}`、`/api/orders/*`、`/api/user/{profile,avatar}`、`/api/admin/{stats,books,orders,users,categories}`。详见 `docs/产品设计-v4.md`。
 
 ## 测试
 
@@ -91,8 +100,7 @@ node tests/api.mjs --reset
 node tests/e2e.mjs --reset
 ```
 
-当前覆盖：接口 28 项（鉴权/403/419/图书/购物车/立即购买不串车/扣库存/取消回补/越权/头像 MIME/分类）；E2E 52 项（书卡可见性、Hero 漂浮书、分类小书封、图标对齐、头像 40px、搜索外点/路由收起、红点显隐、注册与头像入口、昵称、加购、立即购买、后台侧边栏与刷新、权限、退出）。Demo 冒烟 10 项（
-ode tests/demo-check.mjs）。
+当前覆盖：接口 38 项（鉴权/403/419/1000 本且每类≥10/图书/购物车/立即购买不串车/扣库存/取消回补/越权/头像 MIME/分类/封面字段/用户管理/封面解析单测）；E2E 60 项（书卡与封面可见性、Hero、分类小书封、图标对齐、头像 40px 与上传后显示、搜索收起、红点、注册、立即购买、后台侧边栏/刷新/用户管理/无手填封面、权限、退出）。Demo 冒烟 12 项（`node tests/demo-check.mjs`）。
 
 ## Demo（不需要后端）
 

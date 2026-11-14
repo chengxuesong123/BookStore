@@ -4,7 +4,7 @@
  */
 import { books as seedBooks, categories as seedCategories } from './data';
 
-const STORAGE_KEY = 'moyu-mock-v3';
+const STORAGE_KEY = 'moyu-mock-v4';
 const CSRF_TOKEN = 'mock-csrf-token';
 
 function now() {
@@ -22,6 +22,15 @@ function freshState() {
                 nickname: '店长',
                 password: 'admin123',
                 role: 'admin',
+                avatar: '',
+                created_at: now(),
+            },
+            {
+                id: 2,
+                email: 'reader@moyu.com',
+                nickname: '小鱼',
+                password: 'reader123',
+                role: 'customer',
                 avatar: '',
                 created_at: now(),
             },
@@ -62,6 +71,15 @@ const currentUser = () => (state.sessionUserId ? userById(state.sessionUserId) :
 const publicUser = (u) => u && ({
     id: u.id, email: u.email, nickname: u.nickname, role: u.role, avatar: u.avatar, created_at: u.created_at,
 });
+
+function mockCover(title) {
+    const text = String(title || 'book');
+    let hash = 0;
+    for (let i = 0; i < text.length; i++) hash = (hash * 31 + text.charCodeAt(i)) >>> 0;
+    const h1 = hash % 360;
+    const h2 = (h1 + 38) % 360;
+    return `linear-gradient(150deg, hsl(${h1} 42% 38%), hsl(${h2} 46% 24%))`;
+}
 
 function cartKey() {
     const user = currentUser();
@@ -404,7 +422,7 @@ export function installMock(http) {
                         price: Number(body.price),
                         original_price: Number(body.original_price || 0),
                         stock: Number(body.stock || 0),
-                        cover: body.cover || 'linear-gradient(150deg, #3d4f6b, #263349)',
+                        cover: mockCover(body.title),
                         intro: body.intro || '',
                         tags: body.tags || '',
                         tag_list: (body.tags || '').split(',').filter(Boolean),
@@ -421,12 +439,14 @@ export function installMock(http) {
                     if (!book) fail(404, 40400, '图书不存在');
                     if (method === 'get') return respond(ok({ book }));
                     if (method === 'put') {
+                        const oldTitle = book.title;
                         Object.assign(book, {
                             title: body.title, author: body.author, publisher: body.publisher,
                             category_id: Number(body.category_id), price: Number(body.price),
                             original_price: Number(body.original_price || 0), stock: Number(body.stock || 0),
-                            cover: body.cover, intro: body.intro, tags: body.tags, status: body.status,
+                            intro: body.intro, tags: body.tags, status: body.status,
                         });
+                        if (oldTitle !== body.title) book.cover = mockCover(body.title);
                         const cat = state.categories.find((c) => c.id === book.category_id);
                         book.category_name = cat ? cat.name : '';
                         save();
@@ -474,6 +494,39 @@ export function installMock(http) {
                     } else fail(422, 42200, '当前状态不能执行该操作');
                     save();
                     return respond(ok(null, '操作成功'));
+                }
+                if (path === '/admin/users' && method === 'get') {
+                    let users = state.users.map((u) => ({
+                        id: u.id,
+                        email: u.email,
+                        nickname: u.nickname,
+                        role: u.role,
+                        avatar: u.avatar,
+                        created_at: u.created_at,
+                        order_count: state.orders.filter((o) => o.user_id === u.id).length,
+                    }));
+                    const ukw = String(params.q || '').trim();
+                    if (ukw) users = users.filter((u) => u.email.includes(ukw) || u.nickname.includes(ukw));
+                    return respond(ok(paged(users, params, 15)));
+                }
+                if (/^\/admin\/users\/\d+$/.test(path) && method === 'put') {
+                    const uid = Number(path.split('/')[3]);
+                    const target = state.users.find((u) => u.id === uid);
+                    if (!target) fail(404, 40400, '用户不存在');
+                    const nickname = (body.nickname || target.nickname).trim();
+                    const role = body.role || target.role;
+                    if (nickname.length < 2 || nickname.length > 20) fail(422, 42200, '昵称需要 2–20 个字', { nickname: '昵称需要 2–20 个字' });
+                    if (!['customer', 'admin'].includes(role)) fail(422, 42200, '角色不合法', { role: '角色不合法' });
+                    if (uid === user.id && role !== target.role) fail(422, 42200, '不能修改自己的角色', { role: '不能修改自己的角色' });
+                    if (target.role === 'admin' && role !== 'admin' && state.users.filter((u) => u.role === 'admin').length <= 1) {
+                        fail(422, 42200, '至少要保留一个管理员', { role: '至少要保留一个管理员' });
+                    }
+                    if (body.password && String(body.password).length < 6) fail(422, 42200, '密码至少 6 位', { password: '密码至少 6 位' });
+                    target.nickname = nickname;
+                    target.role = role;
+                    if (body.password) target.password = body.password;
+                    save();
+                    return respond(ok({ user: { ...target, order_count: state.orders.filter((o) => o.user_id === uid).length } }, '用户已更新'));
                 }
                 if (path === '/admin/categories' && method === 'get') {
                     const list = state.categories.map((c) => ({

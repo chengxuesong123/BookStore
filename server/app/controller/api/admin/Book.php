@@ -8,6 +8,7 @@ use app\exception\ApiException;
 use app\model\Book as BookModel;
 use app\model\CartItem;
 use app\model\Category;
+use app\service\CoverService;
 
 class Book extends ApiBase
 {
@@ -51,6 +52,9 @@ class Book extends ApiBase
         if ($errors) {
             throw new ApiException(42200, (string) reset($errors), 422, ['errors' => $errors]);
         }
+
+        // 封面不再由后台手填：按书名/作者自动取（Open Library → Google Books）
+        $data['cover'] = CoverService::find((string) $data['title'], (string) $data['author']);
 
         $book = BookModel::create($data);
 
@@ -120,7 +124,6 @@ class Book extends ApiBase
             'price'          => (float) ($input['price'] ?? 0),
             'original_price' => (float) ($input['original_price'] ?? 0),
             'stock'          => (int) ($input['stock'] ?? 0),
-            'cover'          => trim((string) ($input['cover'] ?? '')),
             'intro'          => trim((string) ($input['intro'] ?? '')),
             'tags'           => trim((string) ($input['tags'] ?? '')),
             'status'         => (string) ($input['status'] ?? 'on'),
@@ -150,9 +153,6 @@ class Book extends ApiBase
         }
         if (mb_strlen($data['tags']) > 120) {
             $errors['tags'] = '标签不超过 120 字';
-        }
-        if ($data['cover'] === '') {
-            $data['cover'] = 'linear-gradient(150deg, #3d4f6b, #263349)';
         }
 
         return [$data, $errors];

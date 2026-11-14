@@ -16,7 +16,7 @@
     <div v-else class="cart-layout">
         <div class="cart-list">
             <div v-for="line in cart.items" :key="line.book.id" class="cart-row">
-                <router-link :to="`/book/${line.book.id}`" class="cart-thumb" :style="{ background: line.book.cover }">
+                <router-link :to="`/book/${line.book.id}`" class="cart-thumb" :style="coverStyle(line.book)">
                     {{ line.book.title }}
                 </router-link>
                 <div>
@@ -53,6 +53,7 @@
 
 <script setup>
 import { ref } from 'vue';
+import { coverStyle } from '../../utils/cover';
 import { useCartStore } from '../../stores/cart';
 import { useAuthStore } from '../../stores/auth';
 import { useUiStore } from '../../stores/ui';

@@ -37,7 +37,7 @@
                         <span v-if="cart.count > 0" class="cart-badge show">{{ cart.count > 99 ? '99+' : cart.count }}</span>
                     </router-link>
                     <router-link v-if="auth.user" class="avatar-btn" to="/account" :title="auth.user.nickname">
-                        <img v-if="auth.user.avatar" :src="auth.user.avatar" alt="头像">
+                        <img v-if="auth.user.avatar" :key="auth.user.avatar" :src="auth.user.avatar" alt="头像">
                         <span v-else class="avatar-initial">{{ initial }}</span>
                     </router-link>
                     <router-link v-else class="btn-login" to="/login">登录</router-link>
@@ -83,7 +83,7 @@
                     </div>
                 </div>
                 <div class="footer-bottom">
-                    <span>© 2026 墨屿书屋 · v2 前后端分离</span>
+                    <span>© 2026 墨屿书屋</span>
                 </div>
             </div>
         </footer>

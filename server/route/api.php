@@ -55,6 +55,9 @@ Route::group('api/admin', function () {
     Route::post('orders/:id/complete', 'api.admin.Order/complete');
     Route::post('orders/:id/cancel', 'api.admin.Order/cancel');
 
+    Route::get('users', 'api.admin.User/index');
+    Route::put('users/:id', 'api.admin.User/update');
+
     Route::get('categories', 'api.admin.Category/index');
     Route::post('categories', 'api.admin.Category/store');
     Route::put('categories/:id', 'api.admin.Category/update');

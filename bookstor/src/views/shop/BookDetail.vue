@@ -6,7 +6,7 @@
         </div>
 
         <div class="detail">
-            <div class="detail-cover" :style="{ background: book.cover }">
+            <div class="detail-cover" :style="coverStyle(book)">
                 <span class="dc-cat">{{ book.category_name }}</span>
                 <div>
                     <div class="dc-title">{{ book.title }}</div>
@@ -79,6 +79,7 @@ import { onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import BookCard from '../../components/BookCard.vue';
 import { http } from '../../api/client';
+import { coverStyle } from '../../utils/cover';
 import { useCartStore } from '../../stores/cart';
 import { useUiStore } from '../../stores/ui';
 
