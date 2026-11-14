@@ -1,9 +1,10 @@
 /**
  * 封面渲染工具：
- * - 真实图片地址（http/https、/uploads、data:）→ background-image
- * - CSS 渐变字符串 → 直接用作 background
- * - 空封面 → 按书名生成稳定的渐变色，保证任何书都有封面可看
+ * - 真实图片地址 / 本地 SVG 书封 → 封面自带文字，不再叠标题
+ * - CSS 渐变 / 空封面占位 → 用 HTML 叠标题
  */
+
+const IS_MOCK = typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_MOCK === '1';
 
 export function isImageCover(cover) {
     if (typeof cover !== 'string' || cover === '') return false;
@@ -21,6 +22,24 @@ export function gradientFor(seed) {
     return `linear-gradient(150deg, hsl(${h1} 42% 38%), hsl(${h2} 46% 24%))`;
 }
 
+/**
+ * 当前用的哪种封面：image（外链/上传）、local（本地 SVG）、gradient（占位）
+ */
+export function coverKind(book) {
+    const cover = typeof book === 'string' ? book : (book && book.cover) || '';
+    if (isImageCover(cover)) return 'image';
+    if (cover.includes('gradient')) return 'gradient';
+    if (!IS_MOCK && book && typeof book === 'object' && book.id) return 'local';
+    return 'gradient';
+}
+
+/**
+ * 只有渐变占位才需要 HTML 叠标题；图片和本地 SVG 书封自带文字
+ */
+export function showCoverOverlay(book) {
+    return coverKind(book) === 'gradient';
+}
+
 export function coverStyle(book) {
     const cover = typeof book === 'string' ? book : (book && book.cover) || '';
     if (isImageCover(cover)) {
@@ -32,6 +51,14 @@ export function coverStyle(book) {
     }
     if (cover.includes('gradient')) {
         return { background: cover };
+    }
+    const id = book && typeof book === 'object' ? book.id : 0;
+    if (!IS_MOCK && id) {
+        return {
+            backgroundImage: `url("/api/cover/${id}")`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+        };
     }
     const seed = (book && (book.title || book.id)) || cover || 'book';
     return { background: gradientFor(seed) };

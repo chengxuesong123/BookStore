@@ -58,7 +58,7 @@ class Client {
         this.jar.absorb(res);
         let json = null;
         try { json = await res.json(); } catch (e) { json = null; }
-        return { status: res.status, body: json };
+        return { status: res.status, body: json, contentType: res.headers.get('content-type') || '' };
     }
     get(p) { return this.req('GET', p); }
     post(p, b = {}) { return this.req('POST', p, b); }
@@ -100,13 +100,17 @@ customer.token = savedToken;
 check('缺 CSRF token 返回 419', csrfFail.status === 419);
 
 const books = await customer.get('/books?page_size=50');
-check('图书列表返回 1000 本', books.body.data.total === 1000, String(books.body.data.total));
+check('图书列表返回 500 本', books.body.data.total === 500, String(books.body.data.total));
+const defaultPage = await customer.get('/books');
+check('默认每页 10 本', defaultPage.body.data.list.length === 10, String(defaultPage.body.data.list.length));
 const catTotals = [];
 for (let cid = 1; cid <= 6; cid++) {
     const r = await customer.get(`/books?cat=${cid}&page_size=200`);
     catTotals.push(r.body.data.total);
 }
 check('每个分类至少 10 本', catTotals.every((n) => n >= 10), JSON.stringify(catTotals));
+const coverRes = await customer.req('GET', '/cover/1');
+check('本地 SVG 书封可用', coverRes.status === 200 && String(coverRes.contentType).includes('image/svg+xml'), String(coverRes.contentType));
 const book = books.body.data.list.find((b) => b.stock >= 2) || books.body.data.list[0];
 check('图书字段完整', typeof book.price === 'number' && typeof book.stock === 'number' && !!book.title);
 

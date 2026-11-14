@@ -394,3 +394,7 @@
 .avatar-btn { width: 40px; height: 40px; }
 .avatar-btn.small { width: 34px; height: 34px; }
 @media (max-width: 760px) { .avatar-btn { width: 36px; height: 36px; } }
+/* v5：列表元信息与分页窗口 */
+.list-meta { margin: 0 0 14px; font-size: 13px; color: #64798f; }
+.pager .pager-info { margin-left: 12px; font-size: 12.5px; color: #8aa0ba; }
+.pager { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }

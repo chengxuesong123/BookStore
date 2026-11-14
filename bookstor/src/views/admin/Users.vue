@@ -72,9 +72,7 @@
             </table>
         </div>
 
-        <ul v-if="pages > 1" class="pagination pager">
-            <li v-for="p in pages" :key="p" :class="{ active: p === page }"><a href="#" @click.prevent="go(p)">{{ p }}</a></li>
-        </ul>
+        <Pager :page="page" :pages="pages" @change="go" />
     </div>
 </template>
 
@@ -82,6 +80,7 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { http } from '../../api/client';
+import Pager from '../../components/Pager.vue';
 import { useUiStore } from '../../stores/ui';
 
 const route = useRoute();

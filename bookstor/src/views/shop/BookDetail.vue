@@ -7,11 +7,13 @@
 
         <div class="detail">
             <div class="detail-cover" :style="coverStyle(book)">
-                <span class="dc-cat">{{ book.category_name }}</span>
-                <div>
-                    <div class="dc-title">{{ book.title }}</div>
-                    <div class="dc-author">{{ book.author }}</div>
-                </div>
+                <template v-if="showCoverOverlay(book)">
+                    <span class="dc-cat">{{ book.category_name }}</span>
+                    <div>
+                        <div class="dc-title">{{ book.title }}</div>
+                        <div class="dc-author">{{ book.author }}</div>
+                    </div>
+                </template>
             </div>
 
             <div class="detail-info">
@@ -79,7 +81,7 @@ import { onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import BookCard from '../../components/BookCard.vue';
 import { http } from '../../api/client';
-import { coverStyle } from '../../utils/cover';
+import { coverStyle, showCoverOverlay } from '../../utils/cover';
 import { useCartStore } from '../../stores/cart';
 import { useUiStore } from '../../stores/ui';
 

@@ -134,7 +134,7 @@ try {
     console.log('\n[1] 首页、图标与红点');
     await go('/');
     check('首页渲染标题', await waitFor(async () => (await text('.hero h1')).includes('一本书')));
-    check('书卡 16 张', await waitFor(async () => (await count('.book-card')) === 16, 8000));
+    check('首页书卡 20 张（每栏 10）', await waitFor(async () => (await count('.book-card')) === 20, 8000));
     check('搜索与购物车是 SVG 图标', (await count('.header-actions .icon-btn svg.ui-icon')) === 2);
     const iconSize = await evalJs('getComputedStyle(document.querySelector(".header-actions .ui-icon")).width');
     check('图标尺寸 24px', iconSize === '24px', iconSize);
@@ -150,7 +150,7 @@ try {
     check('书卡已入场可见', await waitFor(async () => (await evalJs('getComputedStyle(document.querySelector(".book-card")).opacity')) === '1', 8000));
     const firstCardBox = await evalJs('(function(){var r=document.querySelector(".book-card").getBoundingClientRect();return {w:Math.round(r.width),h:Math.round(r.height)};})()');
     check('书卡有实际尺寸', firstCardBox.w > 150 && firstCardBox.h > 200, JSON.stringify(firstCardBox));
-    check('书卡封面已渲染（渐变占位）', (await evalJs('document.querySelector(".book-card .book-cover").getAttribute("style") || ""')).includes('linear-gradient'));
+    check('书卡封面已渲染', ((await evalJs('document.querySelector(".book-card .book-cover").getAttribute("style") || ""')).includes('/api/cover/') || (await evalJs('document.querySelector(".book-card .book-cover").getAttribute("style") || ""')).includes('linear-gradient')));
     check('Hero 漂浮书 3 本', (await count('.hero-books .book-float.b1, .hero-books .book-float.b2, .hero-books .book-float.b3')) === 3);
     const floatBox = await evalJs('(function(){var r=document.querySelector(".book-float").getBoundingClientRect();return {w:Math.round(r.width),h:Math.round(r.height)};})()');
     check('漂浮书尺寸正常', floatBox.w > 120 && floatBox.h > 180, JSON.stringify(floatBox));
@@ -165,6 +165,17 @@ try {
     await click('.main-nav a[href="/books"]');
     check('切换页面后搜索收起', await waitFor(async () => (await count('.search-overlay')) === 0, 8000));
     await go('/');
+
+    console.log('\n[1.1] 列表每页 10 本 + 5 页码窗口');
+    await go('/books');
+    check('列表每页 10 本', await waitFor(async () => (await count('.book-card')) === 10, 8000));
+    check('总数显示 500 本', (await text('.list-meta')).includes('500'));
+    check('页码最多 5 个', (await count('.pager .pagination li')) === 7); // 上一页 + 5 个页码 + 下一页
+    await click('.pager .pagination li:nth-child(6) a');
+    check('翻到第 5 页', await waitFor(async () => (await evalJs('location.search')).includes('page=5'), 8000));
+    check('第 5 页仍 10 本', await waitFor(async () => (await count('.book-card')) === 10, 8000));
+    const pageNums = await evalJs('[...document.querySelectorAll(".pager .pagination li")].slice(1,-1).map(function(li){return li.textContent.trim()})');
+    check('页码窗口为 3–7', pageNums.join(',') === '3,4,5,6,7', JSON.stringify(pageNums));
 
     console.log('\n[2] 注册、头像与用户中心');
     await go('/register');
@@ -293,7 +304,7 @@ try {
 const jsErrors = exceptions.filter((e) => !/favicon/i.test(e));
 check('没有 JS 运行时异常', jsErrors.length === 0, jsErrors.join(' | '));
 
-console.log(`\n===== E2E v4：${pass} 通过，${failures.length} 失败 =====`);
+console.log(`\n===== E2E v5：${pass} 通过，${failures.length} 失败 =====`);
 if (failures.length) {
     failures.forEach((f) => console.log('  ✗ ' + f));
     process.exit(1);

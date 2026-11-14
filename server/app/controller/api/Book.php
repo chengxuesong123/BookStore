@@ -31,7 +31,7 @@ class Book extends ApiBase
         $catId = (int) $this->request->get('cat', 0);
         $sort  = (string) $this->request->get('sort', 'default');
         $page  = max(1, (int) $this->request->get('page', 1));
-        $size  = min(48, max(1, (int) $this->request->get('page_size', 8)));
+        $size  = min(48, max(1, (int) $this->request->get('page_size', 10)));
 
         $query = BookModel::withCategory()->where('b.status', 'on');
 

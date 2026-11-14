@@ -68,7 +68,16 @@ pnpm dev
 - **CSRF**：API 写请求带 `X-CSRF-Token` 头，缺失返回 419
 - **库表**：`users.avatar`、`orders.source`（cart/direct）
 
-## v4 改了什么（本版）
+## v5 改了什么（本版）
+
+- **书库换 500 本真实书目**：`server/database/books-real.csv`（书名/作者/分类真实），`php think books:import --truncate` 导入；`db:init --seed` 会自动导
+- **每页/每栏 10 本**：列表与首页统一 10 本，后端 `page_size` 默认 10
+- **5 页码窗口**：分页只显示当前页附近 5 个页码 + 上一页/下一页，不再平铺 50/125 个页码
+- **本地 SVG 书封**：`GET /api/cover/{id}` 按分类配色 + 书名/作者/出版社生成，不依赖外网；有外链封面时优先用外链
+- **封面回填**：`php think cover:backfill --limit=200`，外网可用时把本地占位替换成 Open Library / Google Books 真封面
+- **头像加固**：前端 canvas 压缩到 512px 再传（5MB 照片也能传），服务端上限放宽到 5MB，上传后用户中心与导航栏同步刷新
+
+## v4 改了什么（历史）
 
 - **书库扩到 1000 本**：6 个分类各 166–167 本，种子由 `server/database/generate_seed.php` 生成
 - **封面自动获取**：新增/改名时按书名先查 Open Library，找不到再查 Google Books；都失败就留空，前台用稳定渐变占位
@@ -87,7 +96,7 @@ pnpm dev
 
 ## 接口概览
 
-`GET /api/health`、`/api/auth/*`、`/api/books`、`/api/cart`、`/api/checkout/{cart,direct}`、`/api/orders/*`、`/api/user/{profile,avatar}`、`/api/admin/{stats,books,orders,users,categories}`。详见 `docs/产品设计-v4.md`。
+`GET /api/health`、`/api/auth/*`、`/api/books`、`/api/cart`、`/api/checkout/{cart,direct}`、`/api/orders/*`、`/api/user/{profile,avatar}`、`/api/admin/{stats,books,orders,users,categories}`。详见 `docs/产品改进书-v5.md`。
 
 ## 测试
 
@@ -100,7 +109,7 @@ node tests/api.mjs --reset
 node tests/e2e.mjs --reset
 ```
 
-当前覆盖：接口 38 项（鉴权/403/419/1000 本且每类≥10/图书/购物车/立即购买不串车/扣库存/取消回补/越权/头像 MIME/分类/封面字段/用户管理/封面解析单测）；E2E 60 项（书卡与封面可见性、Hero、分类小书封、图标对齐、头像 40px 与上传后显示、搜索收起、红点、注册、立即购买、后台侧边栏/刷新/用户管理/无手填封面、权限、退出）。Demo 冒烟 12 项（`node tests/demo-check.mjs`）。
+当前覆盖：接口 40 项（鉴权/403/419/500 本且每类≥10/默认每页 10/本地 SVG 书封/图书/购物车/立即购买不串车/扣库存/取消回补/越权/头像 MIME/分类/用户管理/封面解析单测）；E2E 66 项（500 总数、每页 10、5 页码窗口、书卡与封面、头像上传显示、搜索收起、立即购买、后台用户管理/无手填封面、权限、退出）。Demo 冒烟 12 项（`node tests/demo-check.mjs`）。
 
 ## Demo（不需要后端）
 

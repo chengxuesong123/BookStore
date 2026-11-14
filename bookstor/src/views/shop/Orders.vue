@@ -35,11 +35,7 @@
         </div>
     </div>
 
-    <ul v-if="pages > 1" class="pagination pager">
-        <li v-for="p in pages" :key="p" :class="{ active: p === page }">
-            <a href="#" @click.prevent="go(p)">{{ p }}</a>
-        </li>
-    </ul>
+    <Pager :page="page" :pages="pages" @change="go" />
 </template>
 
 <script setup>
@@ -47,6 +43,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { http } from '../../api/client';
 import { coverStyle } from '../../utils/cover';
+import Pager from '../../components/Pager.vue';
 
 const route = useRoute();
 const router = useRouter();

@@ -21,6 +21,7 @@ Route::post('api/user/avatar', 'api.Account/uploadAvatar');
 Route::get('api/categories', 'api.Book/categories');
 Route::get('api/books', 'api.Book/index');
 Route::get('api/books/:id', 'api.Book/detail');
+Route::get('api/cover/:id', 'api.Cover/svg')->pattern(['id' => '\d+']);
 
 // ---------- 购物车 ----------
 Route::get('api/cart', 'api.Cart/index');

@@ -1,8 +1,10 @@
 <template>
     <router-link :to="`/book/${book.id}`" class="book-card" :class="{ in: shown }">
         <div class="book-cover" :style="coverStyle(book)">
-            <span class="cv-cat">{{ book.category_name || '图书' }}</span>
-            <div class="cv-title">{{ book.title }}</div>
+            <template v-if="showCoverOverlay(book)">
+                <span class="cv-cat">{{ book.category_name || '图书' }}</span>
+                <div class="cv-title">{{ book.title }}</div>
+            </template>
         </div>
         <div class="book-body">
             <div class="book-title">{{ book.title }}</div>
@@ -19,7 +21,7 @@
 
 <script setup>
 import { onMounted, ref } from 'vue';
-import { coverStyle } from '../utils/cover';
+import { coverStyle, showCoverOverlay } from '../utils/cover';
 
 const props = defineProps({
     book: { type: Object, required: true },

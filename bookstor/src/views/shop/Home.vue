@@ -18,8 +18,10 @@
                 :class="`b${i + 1}`"
                 :style="coverStyle(b)"
             >
-                <span class="bf-cat">{{ b.category_name }}</span>
-                <span class="bf-title">{{ b.title }}</span>
+                <template v-if="showCoverOverlay(b)">
+                    <span class="bf-cat">{{ b.category_name }}</span>
+                    <span class="bf-title">{{ b.title }}</span>
+                </template>
             </router-link>
         </div>
     </section>
@@ -91,7 +93,7 @@
 import { computed, onMounted, ref } from 'vue';
 import BookCard from '../../components/BookCard.vue';
 import { http } from '../../api/client';
-import { coverStyle } from '../../utils/cover';
+import { coverStyle, showCoverOverlay } from '../../utils/cover';
 
 const newest = ref([]);
 const hot = ref([]);
@@ -108,8 +110,8 @@ async function load() {
     loadError.value = '';
     try {
         const [a, b, c] = await Promise.all([
-            http.get('/books', { params: { page_size: 8 } }),
-            http.get('/books', { params: { page_size: 8, sort: 'stock' } }),
+            http.get('/books', { params: { page_size: 10 } }),
+            http.get('/books', { params: { page_size: 10, sort: 'stock' } }),
             http.get('/categories'),
         ]);
         newest.value = a.data.list || [];

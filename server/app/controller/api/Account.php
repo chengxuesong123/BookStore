@@ -39,8 +39,8 @@ class Account extends ApiBase
         if ($file === null) {
             throw new ApiException(42200, '请选择图片文件', 422, ['errors' => ['avatar' => '请选择图片文件']]);
         }
-        if ($file->getSize() > 2 * 1024 * 1024) {
-            throw new ApiException(42200, '头像不能超过 2MB', 422, ['errors' => ['avatar' => '头像不能超过 2MB']]);
+        if ($file->getSize() > 10 * 1024 * 1024) {
+            throw new ApiException(42200, '头像不能超过 10MB', 422, ['errors' => ['avatar' => '头像不能超过 10MB']]);
         }
 
         $mimeMap = [

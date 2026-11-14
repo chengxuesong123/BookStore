@@ -64,7 +64,7 @@ await go('/');
 await evalJs("localStorage.removeItem('moyu-mock-v4'); true");
 await send('Page.reload', { ignoreCache: true });
 await sleep(1200);
-check('首页 16 张书卡可见', await waitFor(async () => (await count('.book-card')) === 16 && (await evalJs('getComputedStyle(document.querySelector(".book-card")).opacity')) === '1'));
+check('首页 20 张书卡可见', await waitFor(async () => (await count('.book-card')) === 20 && (await evalJs('getComputedStyle(document.querySelector(".book-card")).opacity')) === '1'));
 check('Hero 漂浮书 3 本', (await count('.hero-books .book-float')) === 3);
 check('分类精选 3 张卡', (await count('.promo-card')) === 3);
 check('分类卡小书封 3 个', (await count('.promo-card .mini-book')) === 3);

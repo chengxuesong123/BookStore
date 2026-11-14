@@ -200,7 +200,7 @@ async function fileToDataUrl(file) {
     });
 }
 
-function paged(list, params, defaultSize = 8) {
+function paged(list, params, defaultSize = 10) {
     const page = Math.max(1, Number(params.page || 1));
     const size = Math.max(1, Number(params.page_size || defaultSize));
     return {

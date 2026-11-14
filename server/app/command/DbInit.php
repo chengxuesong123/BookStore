@@ -53,6 +53,20 @@ class DbInit extends Command
             $output->writeln('<info>导入 database/' . $name . '.sql：' . count($statements) . ' 条语句</info>');
         }
 
+        // 种子导入后，把真实书目 CSV 一并灌进去（500 本）
+        if ($input->getOption('seed')) {
+            $csv = root_path() . 'database' . DIRECTORY_SEPARATOR . 'books-real.csv';
+            if (is_file($csv)) {
+                try {
+                    $stat = \app\service\BooksImporter::import($csv, true);
+                    $output->writeln('<info>导入 database/books-real.csv：' . $stat['imported'] . ' 本</info>');
+                } catch (\Throwable $e) {
+                    $output->writeln('<error>书籍导入失败：' . $e->getMessage() . '</error>');
+                    return 1;
+                }
+            }
+        }
+
         $output->writeln('<info>完成</info>');
         return 0;
     }

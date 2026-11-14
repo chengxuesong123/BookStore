@@ -7,5 +7,6 @@ return [
     'commands' => [
         \app\command\DbInit::class,
         \app\command\CoverBackfill::class,
+        \app\command\BooksImport::class,
     ],
 ];

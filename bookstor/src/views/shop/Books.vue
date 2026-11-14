@@ -36,17 +36,12 @@
         <p>换个关键词或分类试试。</p>
     </div>
     <template v-else>
+        <p class="list-meta">共 {{ total }} 本，每页 10 本，第 {{ page }} / {{ pages }} 页</p>
         <div class="book-grid">
             <BookCard v-for="b in list" :key="b.id" :book="b" />
         </div>
 
-        <ul v-if="pages > 1" class="pagination pager">
-            <li :class="{ disabled: page <= 1 }"><a href="#" @click.prevent="go(page - 1)">上一页</a></li>
-            <li v-for="p in pages" :key="p" :class="{ active: p === page }">
-                <a href="#" @click.prevent="go(p)">{{ p }}</a>
-            </li>
-            <li :class="{ disabled: page >= pages }"><a href="#" @click.prevent="go(page + 1)">下一页</a></li>
-        </ul>
+        <Pager :page="page" :pages="pages" @change="go" />
     </template>
 </template>
 
@@ -54,6 +49,7 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import BookCard from '../../components/BookCard.vue';
+import Pager from '../../components/Pager.vue';
 import { http } from '../../api/client';
 
 const route = useRoute();
@@ -72,7 +68,7 @@ const sort = computed({
     set: (v) => applyQuery({ sort: v, page: 1 }),
 });
 const page = computed(() => Math.max(1, Number(route.query.page || 1)));
-const pages = computed(() => Math.max(1, Math.ceil(total.value / 8)));
+const pages = computed(() => Math.max(1, Math.ceil(total.value / 10)));
 
 function applyQuery(patch) {
     const query = { ...route.query, ...patch };
@@ -102,7 +98,7 @@ async function load() {
                 cat: cat.value || 0,
                 sort: sort.value,
                 page: page.value,
-                page_size: 8,
+                page_size: 10,
             },
         });
         list.value = res.data.list;

@@ -21,7 +21,7 @@
                         <button class="btn btn-primary btn-sm" type="button" :disabled="uploading" @click="fileInput.click()">
                             {{ uploading ? '上传中…' : '更换头像' }}
                         </button>
-                        <p class="muted" style="margin:10px 0 0;font-size:12.5px">支持 jpg / png / webp，不超过 2MB。</p>
+                        <p class="muted" style="margin:10px 0 0;font-size:12.5px">支持 jpg / png / webp，不超过 10MB。</p>
                     </div>
                 </div>
             </div>
@@ -66,6 +66,7 @@
 import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { http } from '../../api/client';
+import { compressImage } from '../../utils/image';
 import { useAuthStore } from '../../stores/auth';
 import { useCartStore } from '../../stores/cart';
 import { useUiStore } from '../../stores/ui';
@@ -102,8 +103,9 @@ async function upload(event) {
     if (!file) return;
     uploading.value = true;
     try {
+        const compressed = await compressImage(file);
         const data = new FormData();
-        data.append('avatar', file);
+        data.append('avatar', compressed);
         // 不要手写 Content-Type：让浏览器带上 multipart boundary，否则后端解析不到文件
         const res = await http.post('/user/avatar', data);
         auth.setUser(res.data.user);
