@@ -73,6 +73,7 @@ class BooksImporter
             $stock = (int) ($line[$index['stock']] ?? 0);
             $tags = trim((string) ($line[$index['tags']] ?? ''));
             $intro = trim((string) ($line[$index['intro']] ?? ''));
+            $cover = isset($index['cover']) ? trim((string) ($line[$index['cover']] ?? '')) : '';
 
             $rows[] = [
                 'category_id'    => $categories[$category],
@@ -82,7 +83,7 @@ class BooksImporter
                 'price'          => max(0.01, $price),
                 'original_price' => max(0, $original),
                 'stock'          => max(0, $stock),
-                'cover'          => '',
+                'cover'          => $cover,
                 'intro'          => $intro,
                 'tags'           => mb_substr($tags, 0, 120),
                 'status'         => 'on',

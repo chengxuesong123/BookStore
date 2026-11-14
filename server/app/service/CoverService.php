@@ -23,7 +23,9 @@ class CoverService
 
         $author = self::clean($author);
 
-        return self::fromOpenLibrary($title, $author) ?: self::fromGoogleBooks($title, $author);
+        return self::fromOpenLibrary($title, $author)
+            ?: self::fromGoogleBooks($title, $author)
+            ?: self::fromDouban($title);
     }
 
     /**
@@ -82,15 +84,22 @@ class CoverService
 
     private static function fromOpenLibrary(string $title, string $author): string
     {
+        $base = (string) config('cover.openlibrary_search', 'https://openlibrary.org/search.json');
+
         $query = ['title' => $title, 'limit' => 5, 'fields' => 'title,cover_i,author_name'];
         if ($author !== '') {
             $query['author'] = $author;
         }
-
-        $base = (string) config('cover.openlibrary_search', 'https://openlibrary.org/search.json');
         $body = self::get($base . '?' . http_build_query($query));
+        $cover = $body === null ? '' : self::parseOpenLibrary($body);
 
-        return $body === null ? '' : self::parseOpenLibrary($body);
+        // 中文作者名常与 OpenLibrary 译名不一致：带作者没命中时，再只用书名试一次
+        if ($cover === '' && $author !== '') {
+            $body = self::get($base . '?' . http_build_query(['title' => $title, 'limit' => 5, 'fields' => 'title,cover_i,author_name']));
+            $cover = $body === null ? '' : self::parseOpenLibrary($body);
+        }
+
+        return $cover;
     }
 
     private static function fromGoogleBooks(string $title, string $author): string
@@ -100,9 +109,105 @@ class CoverService
             $q .= '+inauthor:' . $author;
         }
         $base = (string) config('cover.google_books', 'https://www.googleapis.com/books/v1/volumes');
-        $body = self::get($base . '?' . http_build_query(['q' => $q, 'maxResults' => 1, 'country' => 'US']));
+        $query = ['q' => $q, 'maxResults' => 1, 'country' => 'US'];
+        $key = (string) config('cover.google_key', '');
+        if ($key !== '') {
+            $query['key'] = $key;
+        }
+        $body = self::get($base . '?' . http_build_query($query));
 
         return $body === null ? '' : self::parseGoogleBooks($body);
+    }
+
+    /**
+     * 中文书兜底：豆瓣图书搜索页（HTML 内嵌 __DATA__ JSON）
+     * 只取书名匹配的第一条 cover_url，降低张冠李戴的概率。
+     */
+    public static function douban(string $title): string
+    {
+        if (!config('cover.douban_enabled', true)) {
+            return '';
+        }
+
+        $base = (string) config('cover.douban_search', 'https://search.douban.com/book/subject_search');
+        $url = $base . '?' . http_build_query(['search_text' => $title, 'cat' => 1001]);
+        $html = self::get($url, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36');
+        if ($html === null || $html === '') {
+            return '';
+        }
+
+        return self::parseDouban($html, $title);
+    }
+
+    /**
+     * 解析豆瓣搜索页里的 __DATA__ JSON
+     */
+    public static function parseDouban(string $html, string $title): string
+    {
+        $pos = strpos($html, 'window.__DATA__ = ');
+        if ($pos === false) {
+            return '';
+        }
+        $start = strpos($html, '{', $pos);
+        if ($start === false) {
+            return '';
+        }
+
+        $depth = 0;
+        $inStr = false;
+        $esc = false;
+        $end = null;
+        for ($i = $start, $n = strlen($html); $i < $n; $i++) {
+            $c = $html[$i];
+            if ($inStr) {
+                if ($esc) {
+                    $esc = false;
+                } elseif ($c === '\\') {
+                    $esc = true;
+                } elseif ($c === '"') {
+                    $inStr = false;
+                }
+                continue;
+            }
+            if ($c === '"') {
+                $inStr = true;
+                continue;
+            }
+            if ($c === '{') {
+                $depth++;
+            } elseif ($c === '}') {
+                $depth--;
+                if ($depth === 0) {
+                    $end = $i;
+                    break;
+                }
+            }
+        }
+        if ($end === null) {
+            return '';
+        }
+
+        $data = json_decode(substr($html, $start, $end - $start + 1), true);
+        $items = is_array($data) ? ($data['items'] ?? []) : [];
+        $needle = mb_strtolower(self::clean($title));
+
+        foreach ($items as $item) {
+            $cover = (string) ($item['cover_url'] ?? '');
+            $name = mb_strtolower(self::clean((string) ($item['title'] ?? '')));
+            if ($cover === '' || $name === '') {
+                continue;
+            }
+            if ($name === $needle || str_contains($name, $needle) || str_contains($needle, $name)) {
+                return str_replace('http://', 'https://', $cover);
+            }
+        }
+
+        return '';
+    }
+
+    private static function fromDouban(string $title): string
+    {
+        return self::douban($title);
     }
 
     private static function clean(string $value): string
@@ -112,7 +217,7 @@ class CoverService
         return trim(preg_replace('/\s+/u', ' ', $value) ?? '');
     }
 
-    private static function get(string $url): ?string
+    private static function get(string $url, ?string $userAgent = null): ?string
     {
         if (!function_exists('curl_init')) {
             return null;
@@ -125,10 +230,30 @@ class CoverService
             CURLOPT_MAXREDIRS      => 3,
             CURLOPT_CONNECTTIMEOUT => 3,
             CURLOPT_TIMEOUT        => max(1, (int) config('cover.timeout', 5)),
-            CURLOPT_USERAGENT      => 'MoyuBooks/4.0 (+https://github.com/chengxuesong123/BookStore)',
-            CURLOPT_HTTPHEADER     => ['Accept: application/json'],
+            CURLOPT_USERAGENT      => $userAgent ?? 'MoyuBooks/5.0 (+https://github.com/chengxuesong123/BookStore)',
+            CURLOPT_HTTPHEADER     => ['Accept: text/html,application/json;q=0.9,*/*;q=0.8'],
             CURLOPT_SSL_VERIFYPEER => true,
         ]);
+
+        $proxy = (string) config('cover.proxy', '');
+        if ($proxy !== '') {
+            curl_setopt($ch, CURLOPT_PROXY, $proxy);
+        }
+
+        // CA 证书：优先配置，其次仓库自带的 cacert.pem；都没有就不校验
+        $cainfo = (string) config('cover.cainfo', '');
+        if ($cainfo === '') {
+            $candidate = root_path() . 'database' . DIRECTORY_SEPARATOR . 'cacert.pem';
+            if (is_file($candidate)) {
+                $cainfo = $candidate;
+            }
+        }
+        if ($cainfo !== '' && is_file($cainfo)) {
+            curl_setopt($ch, CURLOPT_CAINFO, $cainfo);
+        } else {
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        }
+
         $body = curl_exec($ch);
         $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $error = curl_error($ch);

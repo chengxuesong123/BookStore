@@ -94,6 +94,33 @@ pnpm dev
 - **搜索自动收起**：点搜索框和图标以外的任意位置、切换页面、提交搜索都会关闭浮层
 - **Demo 模式**：VITE_MOCK=1 时前端用浏览器内 mock 数据，后端完全不用启动
 
+## 封面回填（可选，需要外网）
+
+种子里的 `cover` 默认为空，前台显示本地生成的 SVG 书封。想换成真封面，按这个顺序兜底：
+
+1. Open Library 搜索（`cover_i`）
+2. Google Books（`imageLinks`，可选 `COVER_GOOGLE_KEY`）
+3. 豆瓣图书搜索页（中文书兜底）
+
+```ini
+# server/.env
+COVER_PROXY = 127.0.0.1:7897   # 国内直连不通时填本机代理（Clash 等）
+COVER_GOOGLE_KEY =             # 可选，Google Books 无 key 容易 429
+```
+
+```powershell
+cd server
+
+# 常规补全（前台/后台保存时也会自动查）
+php think cover:backfill --limit=500 --sleep=250
+
+# 中文书命中率更高：并行查豆瓣
+php database/backfill_douban.php --limit=500 --workers=5
+```
+
+仓库自带 `server/database/cacert.pem`，PHP 的 curl 会自动用它校验证书；没有 CA 时会退化为不校验。
+豆瓣只为 Demo 兜底，正式产品请换成有授权的封面源（Open Library / Google Books / 出版社 API）。
+
 ## 接口概览
 
 `GET /api/health`、`/api/auth/*`、`/api/books`、`/api/cart`、`/api/checkout/{cart,direct}`、`/api/orders/*`、`/api/user/{profile,avatar}`、`/api/admin/{stats,books,orders,users,categories}`。详见 `docs/产品改进书-v5.md`。
